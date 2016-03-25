@@ -1,0 +1,183 @@
+package github.peihanw.orauld;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import github.peihanw.ut.PubMethod;
+import static github.peihanw.ut.Stdout.*;
+
+public class OrauldMgr {
+
+	public int _sqlCnt;
+	private BlockingQueue<OrauldTuple>[] _upQueues;
+	private OrauldCmdline _cmdline;
+	private Connection _conn;
+	private ResultSetMetaData _meta;
+	private ResultSet _rs;
+	private Statement _stmt;
+	private int[] _columnTypes;
+
+	public OrauldMgr(BlockingQueue<OrauldTuple>[] up_queues) {
+		_upQueues = up_queues;
+		_cmdline = OrauldCmdline.GetInstance();
+	}
+
+	public int run() {
+		boolean connect_ok_ = false;
+		try {
+			if (!_initConn()) {
+				P(WRN, "call _initConn() error");
+				return 1;
+			} else {
+				connect_ok_ = true;
+			}
+		} catch (Throwable e) { // for 'java.lang.NoClassDefFoundError'
+			P(WRN, e, "call _initConn error");
+			return 1;
+		} finally {
+			if (!connect_ok_) {
+				_emitEOF();
+			}
+		}
+
+		try {
+			_exec();
+		} catch (Exception e) {
+			P(WRN, e, "call _exec() exception");
+			return 1;
+		}
+
+		return 0;
+	}
+
+	public void closeResource() {
+		_closeResource(_rs, _stmt, _conn);
+		_rs = null;
+		_stmt = null;
+		_conn = null;
+	}
+
+	private boolean _initConn() {
+		String jdbc_url_ = String.format("jdbc:oracle:thin:@%s:%d:%s", _cmdline._loginRec._host, _cmdline._loginRec._port, _cmdline._loginRec._sid);
+		try {
+			Class.forName("oracle.jdbc.driver.OracleDriver");
+			_conn = DriverManager.getConnection(jdbc_url_, _cmdline._loginRec._usr, _cmdline._loginRec._password);
+		} catch (Exception e) {
+			P(WRN, e, "init db connection failed");
+			return false;
+		}
+		P(INF, "init db connection [%s] db user [%s] ok", jdbc_url_, _cmdline._loginRec._usr);
+		return true;
+	}
+
+	private void _exec() throws SQLException, InterruptedException {
+		_stmt = _conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+		_stmt.setFetchSize(1000);
+		_rs = _stmt.executeQuery(_cmdline._querySql);
+		P(INF, "query executed, fetchSize=%d, maxRows=%d", _stmt.getFetchSize(), _stmt.getMaxRows());
+		_meta = _rs.getMetaData();
+		_printMeta();
+		int column_cnt_ = _columnTypes.length - 1;
+		OrauldTuple tuple_;
+		while (_rs.next()) {
+			tuple_ = new OrauldTuple(column_cnt_);
+			for (int i = 1; i <= column_cnt_; i++) {
+				_fillTuple(tuple_, _rs, i);
+			}
+			int idx_ = _sqlCnt % _upQueues.length;
+			_upQueues[idx_].offer(tuple_, 86400, TimeUnit.SECONDS);
+			_sqlCnt++;
+		}
+		_emitEOF();
+		P(INF, "%d EOF tuple emitted, _sqlCnt=%d", _upQueues.length, _sqlCnt);
+	}
+
+	private void _emitEOF() {
+		OrauldTuple tuple_ = null;
+		for (int i = 0; i < _upQueues.length; ++i) {
+			tuple_ = new OrauldTuple(1);
+			tuple_._idx = -1;
+			_upQueues[i].add(tuple_);
+		}
+	}
+
+	private void _printMeta() throws SQLException {
+		int column_cnt_ = _meta.getColumnCount();
+		_columnTypes = new int[column_cnt_ + 1];
+		for (int i = 1; i <= column_cnt_; i++) {
+			_columnTypes[i] = _meta.getColumnType(i);
+			P(DBG, "column %3d, [%s] [%s:%d:%d] [%d] [%s]", i, _meta.getColumnName(i), _meta.getColumnTypeName(i),
+				_meta.getPrecision(i), _meta.getScale(i), _meta.getColumnType(i), _meta.getColumnClassName(i));
+		}
+		OrauldWrkRunnable._ColumnTypes = _columnTypes;
+	}
+
+	private void _fillTuple(OrauldTuple tuple, ResultSet rs, int idx) throws SQLException {
+		switch (_columnTypes[idx]) {
+			case 2: // NUMBER, java.math.BigDecimal, (tuple._cells[idx] = rs.getBigDecimal(idx);)
+				tuple._bytes[idx] = rs.getBytes(idx);
+				break;
+			case 12: // VARCHAR/VARCHAR2
+			case 1: // CHAR
+			case 91: // DATE
+			case 93: // TIMESTAMP
+			case -8: // ROWID
+				tuple._bytes[idx] = rs.getBytes(idx);
+				break;
+			case 2005: // CLOB
+				tuple._cells[idx] = rs.getClob(idx);
+				break;
+			case 2004: // BLOB, do nothing, always regard as NULL
+				break;
+			default:
+				byte[] bytes_ = rs.getBytes(idx);
+				if (bytes_ != null) {
+					StringBuilder sb_ = new StringBuilder();
+					sb_.append("[");
+					int i = 0;
+					for (byte b : bytes_) {
+						if (i == 0) {
+							sb_.append(String.format("%02x", b));
+						} else {
+							sb_.append(String.format(" %02x", b));
+						}
+						++i;
+					}
+					sb_.append("]");
+					P(WRN, "_columnTypes[%d] is %d, sample guts: %s", idx, _columnTypes[idx], sb_.substring(0));
+					throw new SQLException("unsupported column type " + _columnTypes[idx]);
+				}
+				break;
+		}
+	}
+
+	private void _closeResource(ResultSet rs, Statement stmt, Connection conn) {
+		if (rs != null) {
+			try {
+				rs.close();
+			} catch (Exception e) {
+				P(WRN, e, "close ResultSet exception, pls ignore");
+			}
+		}
+		if (stmt != null) {
+			try {
+				stmt.close();
+			} catch (Exception e) {
+				P(WRN, e, "close Statement exception, pls ignore");
+			}
+		}
+		if (conn != null) {
+			try {
+				conn.close();
+			} catch (Exception e) {
+				P(WRN, e, "close Connection exception, pls ignore");
+			}
+		}
+	}
+}
