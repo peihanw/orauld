@@ -102,7 +102,7 @@ public class LongOpt extends Object {
 	/**
 	 * Localized strings for error messages
 	 */
-	private ResourceBundle _messages = ResourceBundle.getBundle("github/peihanw/orauld/ut/MessagesBundle", Locale.getDefault());
+	private ResourceBundle _messages = ResourceBundle.getBundle("github/peihanw/ut/MessagesBundle", Locale.getDefault());
 
 	/**
 	 * ***********************************************************************

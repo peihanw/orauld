@@ -7,12 +7,16 @@ import java.nio.charset.Charset;
 import github.peihanw.ut.PubMethod;
 import github.peihanw.ut.Getopt;
 import github.peihanw.ut.Stdout;
+import java.io.BufferedReader;
 import java.io.Console;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class OrauldCmdline {
 
 	private static OrauldCmdline _Instance = null;
 	public String _loginStr;
+	public String _loginCfg;
 	public String _querySql;
 	public String _outputFnm;
 	public String _delimiter;
@@ -36,7 +40,7 @@ public class OrauldCmdline {
 	}
 
 	public void init(String[] args) {
-		Getopt g = new Getopt("sqluld", args, ":l:L:q:o:d:c:w:v:t");
+		Getopt g = new Getopt("sqluld", args, ":l:L:F:q:o:d:c:w:v:t");
 		int c;
 		while ((c = g.getopt()) != -1) {
 			switch (c) {
@@ -46,6 +50,9 @@ public class OrauldCmdline {
 				case 'l':
 					_loginStr = g.getOptarg();
 					_needReadPassword = true;
+					break;
+				case 'F':
+					_loginCfg = g.getOptarg();
 					break;
 				case 'q':
 					_querySql = g.getOptarg();
@@ -102,6 +109,9 @@ public class OrauldCmdline {
 			}
 		}
 
+		if (!_readLoginCfg()) {
+			_usage(1);
+		}
 		if (!_parseLoginStr()) {
 			_usage(1);
 		}
@@ -161,6 +171,48 @@ public class OrauldCmdline {
 		return true;
 	}
 
+	private boolean _readLoginCfg() {
+		if (_loginCfg == null || _loginCfg.isEmpty()) {
+			return true;
+		}
+		BufferedReader br_ = null;
+		try {
+			br_ = new BufferedReader(new FileReader(_loginCfg));
+			P(INF, "[%s] opened for parsing", _loginCfg);
+			String raw_line_;
+			int line_cnt_ = 0;
+			while ((raw_line_ = br_.readLine()) != null) {
+				++line_cnt_;
+				if (raw_line_.startsWith("#")) {
+					continue;
+				}
+				if (raw_line_.matches("^\\s*$")) {
+					continue;
+				}
+				_loginStr = raw_line_;
+				P(DBG, "_loginStr [%s] read from [%s] line [%d]", _loginStr, _loginCfg, line_cnt_);
+				break;
+			}
+			if (_loginStr == null || _loginStr.isEmpty()) {
+				P(WRN, "no login string read from [%s], total line scaned %d", _loginCfg, line_cnt_);
+				return false;
+			} else {
+				return true;
+			}
+		} catch (Exception e) {
+			P(ERO, e, "open [%s] for reading exception", _loginCfg);
+			return false;
+		} finally {
+			try {
+				if (br_ != null) {
+					br_.close();
+				}
+			} catch (IOException ex) {
+				// ignore
+			}
+		}
+	}
+
 	private void _usage(int jvm_exit_code) {
 		String newline_ = String.format("%n");
 		StringBuilder sb_ = new StringBuilder();
@@ -168,15 +220,21 @@ public class OrauldCmdline {
 		sb_.append(newline_);
 		sb_.append("Usage: -L login_str -q query_sql -o output_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbose] [-t]");
 		sb_.append(newline_);
+		sb_.append("Usage: -F login_cfg -q query_sql -o output_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbose] [-t]");
+		sb_.append(newline_);
 		sb_.append("eg   :        -l usr@sid:127.0.0.1:1521 -q \"select * from table_name\" -o uld.bcp");
 		sb_.append(newline_);
 		sb_.append("eg   : -L usr/passwd@sid:127.0.0.1:1521 -q \"select * from table_name\" -o uld.bcp");
+		sb_.append(newline_);
+		sb_.append("eg   : -F $HOME/etc/mytest_db_login.cfg -q \"select * from table_name\" -o uld.bcp");
 		sb_.append(newline_);
 		sb_.append("     : -l/-L : defalt host is 127.0.0.1, default port is 1521");
 		sb_.append(newline_);
 		sb_.append("     : -l : an interactive prompt will ask for password");
 		sb_.append(newline_);
 		sb_.append("     : -L : password is provided via command line args directly, bad guys may peek by list processes");
+		sb_.append(newline_);
+		sb_.append("     : -F : login_str is stored in the config file");
 		sb_.append(newline_);
 		sb_.append("     : -d : default delimiter is pipe char '|'");
 		sb_.append(newline_);

@@ -1,5 +1,6 @@
 package github.peihanw.orauld;
 
+import github.peihanw.ut.PubMethod;
 import java.nio.ByteBuffer;
 import java.sql.Clob;
 import java.sql.SQLException;
@@ -103,14 +104,14 @@ public class OrauldTuple {
 			case 91: // DATE
 			case 93: // TIMESTAMP
 				if (_bytes[idx] != null) {
-					int cc_ = ((int) _bytes[idx][0]) - 100;
-					int yy_ = ((int) _bytes[idx][1]) - 100;
+					int cc_ = ((int) _bytes[idx][0] & 0xff) - 100;
+					int yy_ = ((int) _bytes[idx][1] & 0xff) - 100;
 					int mm_ = (int) _bytes[idx][2];
 					int dd_ = (int) _bytes[idx][3];
 					int hh_ = ((int) _bytes[idx][4]) - 1;
 					int mi_ = ((int) _bytes[idx][5]) - 1;
 					int ss_ = ((int) _bytes[idx][6]) - 1;
-					sb.append(String.format("%02d%02d%02d%02d%02d%02d%02d", cc_, yy_, mm_, dd_, hh_, mi_, ss_));
+					sb.append(String.format("%02d%02d-%02d-%02d %02d:%02d:%02d", cc_, yy_, mm_, dd_, hh_, mi_, ss_));
 					if (column_type_ == 93 && _bytes[idx].length == 11) {
 						int nano_ = ByteBuffer.wrap(_bytes[idx], 7, 4).getInt();
 						sb.append(String.format(".%03d", nano_ / 1000000));
