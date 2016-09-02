@@ -21,9 +21,9 @@ $ ant -f ant.xml
 
 ```
 $ java -cp orauld.jar:../lib/ojdbc14.jar github.peihanw.orauld.OrauldMain
-Usage: -l conn_info -q query_sql -o output_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbose] [-t]
-Usage: -L login_str -q query_sql -o output_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbose] [-t]
-Usage: -F login_cfg -q query_sql -o output_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbose] [-t]
+Usage: -l conn_info -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbosity] [-t]
+Usage: -L login_str -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbosity] [-t]
+Usage: -F login_cfg -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbosity] [-t]
 eg   :        -l usr@sid:127.0.0.1:1521 -q "select * from table_name" -o uld.bcp
 eg   : -L usr/passwd@sid:127.0.0.1:1521 -q "select * from table_name" -o uld.bcp
 eg   : -F $HOME/etc/mytest_db_login.cfg -q "select * from table_name" -o uld.bcp
@@ -31,11 +31,15 @@ eg   : -F $HOME/etc/mytest_db_login.cfg -q "select * from table_name" -o uld.bcp
      : -l : an interactive prompt will ask for password
      : -L : password is provided via command line args directly, bad guys may peek by list processes
      : -F : login_str is stored in the config file
+     : -o : bcp_fnm --> bulk copy output file name
      : -d : default delimiter is pipe char '|'
      : -c : default using JVM default encoding, support GB18030/UTF-8 etc.
      : -w : default 2, worker thread number, should between 1 and 4
      : -v : default 3, 0:ERO, 1:WRN, 2:INF, 3:DBG, 4:TRC
      : -t : default no trim for CHAR type
+Usage: -l/L/F login -q query_sql -O ctl_fnm [-d delimiter] [-c charset] [-v verbosity]
+eg   : -L usr/passwd@sid:dbhost -q "select x,y,z from some_view" -O table_name.ctl
+     : -O : ctl_fnm --> sqlldr control file name, file_name without .ctl is the table_name
 ```
 
 #### Usage examples

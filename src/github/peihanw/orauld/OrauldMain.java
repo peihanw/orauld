@@ -76,7 +76,7 @@ public class OrauldMain {
 
 		mgr_.closeResource();
 		ticker_.tickEnd(mgr_._sqlCnt);
-		P(INF, "%s cnt term pfm %d %.3f %d", cmdline_._outputFnm, ticker_._recNum, ticker_._term, ticker_._pfm);
+		P(INF, "%s cnt term pfm %d %.3f %d", cmdline_._bcpFnm, ticker_._recNum, ticker_._term, ticker_._pfm);
 		System.exit(rc_);
 	}
 }

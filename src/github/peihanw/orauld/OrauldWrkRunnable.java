@@ -10,11 +10,11 @@ public class OrauldWrkRunnable implements Runnable {
 
 	public static int[] _ColumnTypes;
 	public long _wrkCnt;
-	private BlockingQueue<OrauldTuple> _upQueue;
-	private BlockingQueue<OrauldTuple> _dnQueue;
+	private final BlockingQueue<OrauldTuple> _upQueue;
+	private final BlockingQueue<OrauldTuple> _dnQueue;
 	private int _idleCnt;
-	private StringBuilder _sb;
-	private OrauldCmdline _cmdline;
+	private final StringBuilder _sb;
+	private final OrauldCmdline _cmdline;
 	private boolean _terminateFlag = false;
 
 	public OrauldWrkRunnable(BlockingQueue<OrauldTuple> up_queue, BlockingQueue<OrauldTuple> dn_queue) {

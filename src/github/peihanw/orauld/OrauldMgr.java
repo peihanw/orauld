@@ -1,5 +1,6 @@
 package github.peihanw.orauld;
 
+import github.peihanw.ut.PubMethod;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -9,14 +10,18 @@ import java.sql.Statement;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import github.peihanw.ut.PubMethod;
 import static github.peihanw.ut.Stdout.*;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 
 public class OrauldMgr {
 
 	public int _sqlCnt;
-	private BlockingQueue<OrauldTuple>[] _upQueues;
-	private OrauldCmdline _cmdline;
+	private final BlockingQueue<OrauldTuple>[] _upQueues;
+	private final OrauldCmdline _cmdline;
 	private Connection _conn;
 	private ResultSetMetaData _meta;
 	private ResultSet _rs;
@@ -76,23 +81,25 @@ public class OrauldMgr {
 		return true;
 	}
 
-	private void _exec() throws SQLException, InterruptedException {
+	private void _exec() throws Exception {
 		_stmt = _conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 		_stmt.setFetchSize(1000);
 		_rs = _stmt.executeQuery(_cmdline._querySql);
 		P(INF, "query executed, fetchSize=%d, maxRows=%d", _stmt.getFetchSize(), _stmt.getMaxRows());
 		_meta = _rs.getMetaData();
 		_printMeta();
-		int column_cnt_ = _columnTypes.length - 1;
-		OrauldTuple tuple_;
-		while (_rs.next()) {
-			tuple_ = new OrauldTuple(column_cnt_);
-			for (int i = 1; i <= column_cnt_; i++) {
-				_fillTuple(tuple_, _rs, i);
+		if (!PubMethod.IsEmpty(_cmdline._bcpFnm)) {
+			int column_cnt_ = _columnTypes.length - 1;
+			OrauldTuple tuple_;
+			while (_rs.next()) {
+				tuple_ = new OrauldTuple(column_cnt_);
+				for (int i = 1; i <= column_cnt_; i++) {
+					_fillTuple(tuple_, _rs, i);
+				}
+				int idx_ = _sqlCnt % _upQueues.length;
+				_upQueues[idx_].offer(tuple_, 86400, TimeUnit.SECONDS);
+				_sqlCnt++;
 			}
-			int idx_ = _sqlCnt % _upQueues.length;
-			_upQueues[idx_].offer(tuple_, 86400, TimeUnit.SECONDS);
-			_sqlCnt++;
 		}
 		_emitEOF();
 		P(INF, "%d EOF tuple emitted, _sqlCnt=%d", _upQueues.length, _sqlCnt);
@@ -107,7 +114,7 @@ public class OrauldMgr {
 		}
 	}
 
-	private void _printMeta() throws SQLException {
+	private void _printMeta() throws Exception {
 		int column_cnt_ = _meta.getColumnCount();
 		_columnTypes = new int[column_cnt_ + 1];
 		for (int i = 1; i <= column_cnt_; i++) {
@@ -116,6 +123,36 @@ public class OrauldMgr {
 				_meta.getPrecision(i), _meta.getScale(i), _meta.getColumnType(i), _meta.getColumnClassName(i));
 		}
 		OrauldWrkRunnable._ColumnTypes = _columnTypes;
+		if (PubMethod.IsEmpty(_cmdline._ctlFnm)) {
+			return;
+		}
+		String table_name_ = _cmdline._ctlFnm.replaceAll("\\.[0-9A-Za-z]+$", "");
+		FileOutputStream fos_ = new FileOutputStream(_cmdline._ctlFnm);
+		OutputStreamWriter osw_ = new OutputStreamWriter(fos_, _cmdline._charset);
+		PrintWriter pw_ = new PrintWriter(osw_);
+		P(INF, "%s opened for writing, charset [%s], table_name [%s]", _cmdline._ctlFnm, _cmdline._charset, table_name_);
+		pw_.printf("LOAD DATA INTO TABLE %s%n", table_name_);
+		pw_.printf("APPEND FIELDS TERMINATED BY \"%s\"%n", _cmdline._delimiter);
+		pw_.printf("TRAILING NULLCOLS%n(%n");
+		for (int i = 1; i <= column_cnt_; i++) {
+			pw_.printf(" %s", _meta.getColumnName(i));
+			if (_columnTypes[i] == 91) {
+				pw_.printf(" DATE 'YYYY-MM-DD HH24:MI:SS'");
+			} else if (_columnTypes[i] == 93) {
+				pw_.printf(" TIMESTAMP 'YYYY-MM-DD HH24:MI:SS.FF3'");
+			} else if (_columnTypes[i] == 12 && _meta.getPrecision(i) > 255) {
+				pw_.printf(" CHAR(%d)", _meta.getPrecision(i));
+			}
+			if (i < column_cnt_) {
+				pw_.printf(",%n");
+			} else {
+				pw_.printf("%n");
+			}
+		}
+		pw_.printf(")%n");
+		pw_.flush();
+		pw_.close();
+		P(INF, "%s closed, table_name [%s], column cnt %d", _cmdline._ctlFnm, table_name_, column_cnt_);
 	}
 
 	private void _fillTuple(OrauldTuple tuple, ResultSet rs, int idx) throws SQLException {

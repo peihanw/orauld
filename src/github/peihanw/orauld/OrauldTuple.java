@@ -1,6 +1,5 @@
 package github.peihanw.orauld;
 
-import github.peihanw.ut.PubMethod;
 import java.nio.ByteBuffer;
 import java.sql.Clob;
 import java.sql.SQLException;

@@ -14,9 +14,9 @@ import static github.peihanw.ut.Stdout.*;
 public class OrauldDmpRunnable implements Runnable {
 
 	public int _dmpCnt;
-	private BlockingQueue<OrauldTuple>[] _upQueues;
-	private BlockingQueue<OrauldTuple>[] _dnQueues;
-	private boolean[] _eofs;
+	private final BlockingQueue<OrauldTuple>[] _upQueues;
+	private final BlockingQueue<OrauldTuple>[] _dnQueues;
+	private final boolean[] _eofs;
 	private PrintWriter _pw;
 	private boolean _terminateFlag = false;
 
@@ -78,11 +78,11 @@ public class OrauldDmpRunnable implements Runnable {
 	private void _dump(OrauldTuple tuple) throws Exception {
 		if (_pw == null) {
 			OrauldCmdline cmdline_ = OrauldCmdline.GetInstance();
-			FileOutputStream fos_ = new FileOutputStream(cmdline_._outputFnm);
+			FileOutputStream fos_ = new FileOutputStream(cmdline_._bcpFnm);
 			OutputStreamWriter osw_;
 			osw_ = new OutputStreamWriter(fos_, cmdline_._charset);
 			_pw = new PrintWriter(osw_);
-			P(INF, "%s opened for writing, charset [%s]", cmdline_._outputFnm, cmdline_._charset);
+			P(INF, "%s opened for writing, charset [%s]", cmdline_._bcpFnm, cmdline_._charset);
 		}
 		if (tuple._joined == null) {
 			_pw.println("");

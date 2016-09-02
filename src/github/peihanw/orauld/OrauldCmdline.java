@@ -18,10 +18,11 @@ public class OrauldCmdline {
 	public String _loginStr;
 	public String _loginCfg;
 	public String _querySql;
-	public String _outputFnm;
+	public String _bcpFnm;
+	public String _ctlFnm;
 	public String _delimiter;
 	public int _wrkNum = 2;
-	public int _verboseLevel = 3;
+	public int _verbosity = 3;
 	public String _charset;
 	public boolean _trimChar;
 	public boolean _needReadPassword = false;
@@ -40,7 +41,7 @@ public class OrauldCmdline {
 	}
 
 	public void init(String[] args) {
-		Getopt g = new Getopt("sqluld", args, ":l:L:F:q:o:d:c:w:v:t");
+		Getopt g = new Getopt("sqluld", args, ":l:L:F:q:o:O:d:c:w:v:t");
 		int c;
 		while ((c = g.getopt()) != -1) {
 			switch (c) {
@@ -58,7 +59,10 @@ public class OrauldCmdline {
 					_querySql = g.getOptarg();
 					break;
 				case 'o':
-					_outputFnm = g.getOptarg();
+					_bcpFnm = g.getOptarg();
+					break;
+				case 'O':
+					_ctlFnm = g.getOptarg();
 					break;
 				case 'd':
 					_delimiter = g.getOptarg();
@@ -75,9 +79,9 @@ public class OrauldCmdline {
 					}
 					break;
 				case 'v':
-					_verboseLevel = Integer.parseInt(g.getOptarg());
-					if (_verboseLevel < 0 || _verboseLevel > 4) {
-						_verboseLevel = 4;
+					_verbosity = Integer.parseInt(g.getOptarg());
+					if (_verbosity < 0 || _verbosity > 4) {
+						_verbosity = 4;
 					}
 					break;
 				case 't':
@@ -90,7 +94,7 @@ public class OrauldCmdline {
 			}
 		}
 
-		if (PubMethod.IsEmpty(_querySql) || PubMethod.IsEmpty(_outputFnm)) {
+		if (PubMethod.IsEmpty(_querySql) || (PubMethod.IsEmpty(_bcpFnm) && PubMethod.IsEmpty(_ctlFnm))) {
 			_usage(1);
 		}
 
@@ -116,18 +120,19 @@ public class OrauldCmdline {
 			_usage(1);
 		}
 
-		Stdout._DftLevel = _verboseLevel;
+		Stdout._DftLevel = _verbosity;
 	}
 
 	public void print() {
 		P(DBG, "login_str [%s]", _loginStr);
 		P(DBG, "query_sql [%s]", _querySql);
-		P(DBG, "output_fnm [%s]", _outputFnm);
+		P(DBG, "bcp_fnm   [%s]", _bcpFnm);
+		P(DBG, "ctl_fnm   [%s]", _ctlFnm);
 		P(DBG, "delimiter [%s]", _delimiter);
-		P(DBG, "charset [%s]", _charset);
-		P(DBG, "wrk_num %d", _wrkNum);
-		P(DBG, "verbose %d", _verboseLevel);
-		P(DBG, "trim %s", _trimChar ? "true" : "false");
+		P(DBG, "charset   [%s]", _charset);
+		P(DBG, "wrk_num   [%d]", _wrkNum);
+		P(DBG, "verbosity [%d]", _verbosity);
+		P(DBG, "trim      [%s]", _trimChar ? "true" : "false");
 	}
 
 	private boolean _parseLoginStr() {
@@ -216,11 +221,11 @@ public class OrauldCmdline {
 	private void _usage(int jvm_exit_code) {
 		String newline_ = String.format("%n");
 		StringBuilder sb_ = new StringBuilder();
-		sb_.append("Usage: -l conn_info -q query_sql -o output_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbose] [-t]");
+		sb_.append("Usage: -l conn_info -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbosity] [-t]");
 		sb_.append(newline_);
-		sb_.append("Usage: -L login_str -q query_sql -o output_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbose] [-t]");
+		sb_.append("Usage: -L login_str -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbosity] [-t]");
 		sb_.append(newline_);
-		sb_.append("Usage: -F login_cfg -q query_sql -o output_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbose] [-t]");
+		sb_.append("Usage: -F login_cfg -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbosity] [-t]");
 		sb_.append(newline_);
 		sb_.append("eg   :        -l usr@sid:127.0.0.1:1521 -q \"select * from table_name\" -o uld.bcp");
 		sb_.append(newline_);
@@ -236,6 +241,8 @@ public class OrauldCmdline {
 		sb_.append(newline_);
 		sb_.append("     : -F : login_str is stored in the config file");
 		sb_.append(newline_);
+		sb_.append("     : -o : bcp_fnm --> bulk copy output file name");
+		sb_.append(newline_);
 		sb_.append("     : -d : default delimiter is pipe char '|'");
 		sb_.append(newline_);
 		sb_.append("     : -c : default using JVM default encoding, support GB18030/UTF-8 etc.");
@@ -245,6 +252,12 @@ public class OrauldCmdline {
 		sb_.append("     : -v : default 3, 0:ERO, 1:WRN, 2:INF, 3:DBG, 4:TRC");
 		sb_.append(newline_);
 		sb_.append("     : -t : default no trim for CHAR type");
+		sb_.append(newline_);
+		sb_.append("Usage: -l/L/F login -q query_sql -O ctl_fnm [-d delimiter] [-c charset] [-v verbosity]");
+		sb_.append(newline_);
+		sb_.append("eg   : -L usr/passwd@sid:dbhost -q \"select x,y,z from some_view\" -O table_name.ctl");
+		sb_.append(newline_);
+		sb_.append("     : -O : ctl_fnm --> sqlldr control file name, file_name without .ctl is the table_name");
 		sb_.append(newline_);
 		System.out.print(sb_.substring(0));
 
