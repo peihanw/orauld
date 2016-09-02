@@ -1,0 +1,7 @@
+manifest.mf
+ant-build/
+build/
+dist/
+lib/
+nbproject/
+test/
