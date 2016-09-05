@@ -24,12 +24,19 @@ public class OrauldDmpRunnable implements Runnable {
 	private PrintWriter _pw;
 	private boolean _terminateFlag = false;
 	private OrauldCmdline _cmdline;
+	private String _eor;
 	private static Pattern _FnmSfx = Pattern.compile("\\.[0-9A-Za-z]+$");
 
 	public OrauldDmpRunnable(BlockingQueue<OrauldTuple>[] up_queues, BlockingQueue<OrauldTuple>[] dn_queues) {
 		_upQueues = up_queues;
 		_dnQueues = dn_queues;
 		_eofs = new boolean[_dnQueues.length];
+		_cmdline = OrauldCmdline.GetInstance();
+		if (PubMethod.IsEmpty(_cmdline._eorStr)) {
+			_eor = String.format("%n");
+		} else {
+			_eor = String.format("%s%n", _cmdline._eorStr);
+		}
 	}
 
 	public void setTerminateFlag() {
@@ -40,7 +47,6 @@ public class OrauldDmpRunnable implements Runnable {
 	@Override
 	public void run() {
 		P(INF, "thread started");
-		_cmdline = OrauldCmdline.GetInstance();
 		boolean end_ = false;
 		int eof_cnt_ = 0;
 		try {
@@ -86,14 +92,13 @@ public class OrauldDmpRunnable implements Runnable {
 		if (_pw == null) {
 			_openPw();
 		}
-		if (tuple._joined == null) {
-			_pw.println("");
-		} else {
-			_pw.println(tuple._joined);
+		if (tuple._joined != null) {
+			_pw.print(tuple._joined);
 		}
+		_pw.print(_eor);
 		_dmpCnt++;
 		_splitCnt++;
-		if (_dmpCnt % 1000000 == 0) {
+		if (_dmpCnt % 100000 == 0) {
 			List<Integer> up_sizes_ = new ArrayList<Integer>();
 			List<Integer> dn_sizes_ = new ArrayList<Integer>();
 			for (int i = 0; i < _upQueues.length; ++i) {

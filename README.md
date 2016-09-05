@@ -20,9 +20,9 @@ $ ant -f ant.xml
 #### Usage syntax
 
 ```
-Usage: -l conn_info -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]
-Usage: -L login_str -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]
-Usage: -F login_cfg -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]
+Usage: -l conn_info -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]
+Usage: -L login_str -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]
+Usage: -F login_cfg -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]
 eg   :        -l usr@sid:127.0.0.1:1521 -q "select * from table_name" -o uld.bcp
 eg   : -L usr/passwd@sid:127.0.0.1:1521 -q "select * from table_name" -o uld.bcp
 eg   : -F $HOME/etc/mytest_db_login.cfg -q "select * from table_name" -o uld.bcp
@@ -31,23 +31,36 @@ eg   : -F $HOME/etc/mytest_db_login.cfg -q "select * from table_name" -o uld.bcp
      : -L : password is provided via command line args directly, bad guys may peek by list processes
      : -F : login_str is stored in the config file
      : -o : bcp_fnm --> bulk copy output file name
-     : -d : default delimiter is pipe char '|'
+     : -d : default field delimiter is pipe char '|'
+     : -D : default record delimiter is %n, should be used for dealing with embeded CR/LF
      : -c : default using JVM default encoding, support GB18030/UTF-8 etc.
      : -w : default 2, worker thread number, should between 1 and 4
      : -s : default 0 (no split), open a new bcp file every split_lines, bcp files will be sequential numbered with '_%09d'
      : -v : default 3, 0:ERO, 1:WRN, 2:INF, 3:DBG, 4:TRC
      : -t : default no trim for CHAR type
-Usage: -l/L/F login -q query_sql -O ctl_fnm [-d delimiter] [-c charset] [-v verbosity]
-eg   : -L usr/passwd@sid:dbhost -q "select x,y,z from some_view" -O table_name.ctl
+Usage: -l/L/F login -q query_sql -O ctl_fnm [-d delimiter] [-D eor_str] [-c charset] [-v verbosity]
+eg   : -L usr/passwd@sid:dbhost -q "select x,y,z from some_view" -D #EOR# -O table_name.ctl
      : -O : ctl_fnm --> sqlldr control file name, file_name without .ctl is the table_name
 ```
 
 #### Usage examples
 
+##### simple dump (most common usage)
+
 ```
 $ java -cp orauld.jar:../lib/ojdbc14.jar github.peihanw.orauld.OrauldMain \
 > -L scott/tiger@orcl:192.168.200.88 \
-> -q "select * from rqst_log where yyyymm=201601" -o rqst_log_201601.bcp -v 1
+> -q "select * from rqst_log where yyyymm=201601" \
+> -o rqst_log_201601.bcp -v 1
+```
+
+##### generate a control file according to the table schema
+
+```
+$ java -cp orauld.jar:../lib/ojdbc14.jar github.peihanw.orauld.OrauldMain \
+> -L scott/tiger@orcl:192.168.200.88 \
+> -q "select * from rqst_log" \
+> -O rqst_log.ctl
 ```
 
 #### Memo

@@ -121,15 +121,26 @@ public class OrauldMgr {
 				_meta.getPrecision(i), _meta.getScale(i), _meta.getColumnType(i), _meta.getColumnClassName(i));
 		}
 		OrauldWrkRunnable._ColumnTypes = _columnTypes;
+		_printCtl();
+	}
+
+	private void _printCtl() throws Exception {
 		if (PubMethod.IsEmpty(_cmdline._ctlFnm)) {
 			return;
 		}
+		int column_cnt_ = _meta.getColumnCount();
 		String table_name_ = _cmdline._ctlFnm.replaceAll("\\.[0-9A-Za-z]+$", "");
 		FileOutputStream fos_ = new FileOutputStream(_cmdline._ctlFnm);
 		OutputStreamWriter osw_ = new OutputStreamWriter(fos_, _cmdline._charset);
 		PrintWriter pw_ = new PrintWriter(osw_);
 		P(INF, "%s opened for writing, charset [%s], table_name [%s]", _cmdline._ctlFnm, _cmdline._charset, table_name_);
-		pw_.printf("LOAD DATA INTO TABLE %s%n", table_name_);
+		pw_.printf("LOAD DATA INFILE *", table_name_);
+		if (PubMethod.IsEmpty(_cmdline._eorStr)) {
+			pw_.printf("%n");
+		} else {
+			pw_.printf(" \"STR '%s\\n'\"%n", _cmdline._eorStr);
+		}
+		pw_.printf("INTO TABLE %s%n", table_name_);
 		pw_.printf("APPEND FIELDS TERMINATED BY \"%s\"%n", _cmdline._delimiter);
 		pw_.printf("TRAILING NULLCOLS%n(%n");
 		for (int i = 1; i <= column_cnt_; i++) {
@@ -148,6 +159,17 @@ public class OrauldMgr {
 			}
 		}
 		pw_.printf(")%n");
+		pw_.printf("-- $ORACLE_HOME/bin/sqlldr userid=\"user/password@oraclesid\"\\%n");
+		pw_.printf("--  silent=header,feedback\\%n");
+		pw_.printf("--  control=%s\\%n", _cmdline._ctlFnm);
+		pw_.printf("--  data=%s.bcp\\%n", table_name_);
+		pw_.printf("--  bad=%s.bad\\%n", table_name_);
+		pw_.printf("--  log=%s.log\\%n", table_name_);
+		pw_.printf("--  bindsize=10485760\\%n");
+		pw_.printf("--  readsize=10485760\\%n");
+		pw_.printf("--  errors=1000000000\\%n");
+		pw_.printf("--  skip_unusable_indexes=true\\%n");
+		pw_.printf("--  commit_discontinued=true%n");
 		pw_.flush();
 		pw_.close();
 		P(INF, "%s closed, table_name [%s], column cnt %d", _cmdline._ctlFnm, table_name_, column_cnt_);
