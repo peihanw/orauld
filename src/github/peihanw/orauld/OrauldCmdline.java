@@ -22,6 +22,7 @@ public class OrauldCmdline {
 	public String _ctlFnm;
 	public String _delimiter;
 	public int _wrkNum = 2;
+	public long _splitLines = 0;
 	public int _verbosity = 3;
 	public String _charset;
 	public boolean _trimChar;
@@ -41,7 +42,7 @@ public class OrauldCmdline {
 	}
 
 	public void init(String[] args) {
-		Getopt g = new Getopt("sqluld", args, ":l:L:F:q:o:O:d:c:w:v:t");
+		Getopt g = new Getopt("sqluld", args, ":l:L:F:q:o:O:d:c:w:s:v:t");
 		int c;
 		while ((c = g.getopt()) != -1) {
 			switch (c) {
@@ -76,6 +77,13 @@ public class OrauldCmdline {
 						_wrkNum = 1;
 					} else if (_wrkNum > 4) {
 						_wrkNum = 4;
+					}
+					break;
+				case 's':
+					_splitLines = Long.parseLong(g.getOptarg());
+					if (_splitLines > 0 && _splitLines < 10000) {
+						P(WRN, "split_lines %d too small, set to 10000", _splitLines);
+						_splitLines = 10000;
 					}
 					break;
 				case 'v':
@@ -124,15 +132,16 @@ public class OrauldCmdline {
 	}
 
 	public void print() {
-		P(DBG, "login_str [%s]", _loginStr);
-		P(DBG, "query_sql [%s]", _querySql);
-		P(DBG, "bcp_fnm   [%s]", _bcpFnm);
-		P(DBG, "ctl_fnm   [%s]", _ctlFnm);
-		P(DBG, "delimiter [%s]", _delimiter);
-		P(DBG, "charset   [%s]", _charset);
-		P(DBG, "wrk_num   [%d]", _wrkNum);
-		P(DBG, "verbosity [%d]", _verbosity);
-		P(DBG, "trim      [%s]", _trimChar ? "true" : "false");
+		P(DBG, "login_str   [%s]", _loginStr);
+		P(DBG, "query_sql   [%s]", _querySql);
+		P(DBG, "bcp_fnm     [%s]", _bcpFnm);
+		P(DBG, "ctl_fnm     [%s]", _ctlFnm);
+		P(DBG, "delimiter   [%s]", _delimiter);
+		P(DBG, "charset     [%s]", _charset);
+		P(DBG, "wrk_num     [%d]", _wrkNum);
+		P(DBG, "split_lines [%d]", _splitLines);
+		P(DBG, "verbosity   [%d]", _verbosity);
+		P(DBG, "trim        [%s]", _trimChar ? "true" : "false");
 	}
 
 	private boolean _parseLoginStr() {
@@ -221,11 +230,11 @@ public class OrauldCmdline {
 	private void _usage(int jvm_exit_code) {
 		String newline_ = String.format("%n");
 		StringBuilder sb_ = new StringBuilder();
-		sb_.append("Usage: -l conn_info -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbosity] [-t]");
+		sb_.append("Usage: -l conn_info -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]");
 		sb_.append(newline_);
-		sb_.append("Usage: -L login_str -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbosity] [-t]");
+		sb_.append("Usage: -L login_str -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]");
 		sb_.append(newline_);
-		sb_.append("Usage: -F login_cfg -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbosity] [-t]");
+		sb_.append("Usage: -F login_cfg -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]");
 		sb_.append(newline_);
 		sb_.append("eg   :        -l usr@sid:127.0.0.1:1521 -q \"select * from table_name\" -o uld.bcp");
 		sb_.append(newline_);
@@ -248,6 +257,8 @@ public class OrauldCmdline {
 		sb_.append("     : -c : default using JVM default encoding, support GB18030/UTF-8 etc.");
 		sb_.append(newline_);
 		sb_.append("     : -w : default 2, worker thread number, should between 1 and 4");
+		sb_.append(newline_);
+		sb_.append("     : -s : default 0 (no split), open a new bcp file every split_lines, bcp files will be sequential numbered with '_%09d'");
 		sb_.append(newline_);
 		sb_.append("     : -v : default 3, 0:ERO, 1:WRN, 2:INF, 3:DBG, 4:TRC");
 		sb_.append(newline_);

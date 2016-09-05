@@ -2000,8 +2000,7 @@ public class Base64 {
 			} // end if: encoding
 			// Else, Decoding
 			else // Meaningful Base64 character?
-			{
-				if (decodabet[theByte & 0x7f] > WHITE_SPACE_ENC) {
+			 if (decodabet[theByte & 0x7f] > WHITE_SPACE_ENC) {
 					buffer[position++] = (byte) theByte;
 					if (position >= bufferLength) { // Enough to output.
 
@@ -2013,7 +2012,6 @@ public class Base64 {
 				else if (decodabet[theByte & 0x7f] != WHITE_SPACE_ENC) {
 					throw new java.io.IOException("Invalid character in Base64 data.");
 				} // end else: not white space either // end else: decoding
-			}
 		} // end write
 
 		/**

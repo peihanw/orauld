@@ -2,9 +2,9 @@ package github.peihanw.ut;
 
 public class AppTicker {
 
-	public int _recNum;
+	public long _recNum;
 	public double _term; // in seconds
-	public int _pfm; // performance: records per second
+	public long _pfm; // performance: records per second
 	public long _tsStart;
 	public long _tsEnd;
 
@@ -21,7 +21,7 @@ public class AppTicker {
 		_tsEnd = System.currentTimeMillis();
 	}
 
-	public void tickEnd(int rec_num) {
+	public void tickEnd(long rec_num) {
 		_tsEnd = System.currentTimeMillis();
 		calcPfm(rec_num);
 	}
@@ -30,7 +30,7 @@ public class AppTicker {
 		_tsStart = _tsEnd;
 	}
 
-	public void calcPfm(int rec_num) {
+	public void calcPfm(long rec_num) {
 		_recNum = rec_num;
 		long dur_millis_ = _tsEnd - _tsStart;
 		if (dur_millis_ <= 0) {

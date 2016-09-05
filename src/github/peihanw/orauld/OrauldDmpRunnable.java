@@ -10,15 +10,21 @@ import java.util.concurrent.TimeUnit;
 
 import github.peihanw.ut.PubMethod;
 import static github.peihanw.ut.Stdout.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class OrauldDmpRunnable implements Runnable {
 
-	public int _dmpCnt;
+	public long _dmpCnt;
+	public long _splitCnt;
+	public int _splitSeq;
 	private final BlockingQueue<OrauldTuple>[] _upQueues;
 	private final BlockingQueue<OrauldTuple>[] _dnQueues;
 	private final boolean[] _eofs;
 	private PrintWriter _pw;
 	private boolean _terminateFlag = false;
+	private OrauldCmdline _cmdline;
+	private static Pattern _FnmSfx = Pattern.compile("\\.[0-9A-Za-z]+$");
 
 	public OrauldDmpRunnable(BlockingQueue<OrauldTuple>[] up_queues, BlockingQueue<OrauldTuple>[] dn_queues) {
 		_upQueues = up_queues;
@@ -34,6 +40,7 @@ public class OrauldDmpRunnable implements Runnable {
 	@Override
 	public void run() {
 		P(INF, "thread started");
+		_cmdline = OrauldCmdline.GetInstance();
 		boolean end_ = false;
 		int eof_cnt_ = 0;
 		try {
@@ -77,12 +84,7 @@ public class OrauldDmpRunnable implements Runnable {
 
 	private void _dump(OrauldTuple tuple) throws Exception {
 		if (_pw == null) {
-			OrauldCmdline cmdline_ = OrauldCmdline.GetInstance();
-			FileOutputStream fos_ = new FileOutputStream(cmdline_._bcpFnm);
-			OutputStreamWriter osw_;
-			osw_ = new OutputStreamWriter(fos_, cmdline_._charset);
-			_pw = new PrintWriter(osw_);
-			P(INF, "%s opened for writing, charset [%s]", cmdline_._bcpFnm, cmdline_._charset);
+			_openPw();
 		}
 		if (tuple._joined == null) {
 			_pw.println("");
@@ -90,6 +92,7 @@ public class OrauldDmpRunnable implements Runnable {
 			_pw.println(tuple._joined);
 		}
 		_dmpCnt++;
+		_splitCnt++;
 		if (_dmpCnt % 1000000 == 0) {
 			List<Integer> up_sizes_ = new ArrayList<Integer>();
 			List<Integer> dn_sizes_ = new ArrayList<Integer>();
@@ -100,5 +103,30 @@ public class OrauldDmpRunnable implements Runnable {
 			P(DBG, "%,d records dumped, up (%s), dn (%s)", _dmpCnt, PubMethod.Collection2Str(up_sizes_, ","),
 				PubMethod.Collection2Str(up_sizes_, ","));
 		}
+		if (_splitCnt >= _cmdline._splitLines) {
+			PubMethod.Close(_pw);
+			_pw = null;
+			_splitCnt = 0;
+		}
+	}
+
+	private void _openPw() throws Exception {
+		String bcp_fnm_ = _cmdline._bcpFnm;
+		if (_cmdline._splitLines > 0) {
+			String sfx_ = "";
+			String pfx_ = bcp_fnm_;
+			Matcher m = _FnmSfx.matcher(bcp_fnm_);
+			if (m.find()) {
+				sfx_ = m.group();
+				pfx_ = m.replaceAll("");
+			}
+			String seq_ = String.format("_%09d", ++_splitSeq);
+			bcp_fnm_ = pfx_ + seq_ + sfx_;
+		}
+		FileOutputStream fos_ = new FileOutputStream(bcp_fnm_);
+		OutputStreamWriter osw_;
+		osw_ = new OutputStreamWriter(fos_, _cmdline._charset);
+		_pw = new PrintWriter(osw_);
+		P(INF, "%s opened for writing, charset [%s]", bcp_fnm_, _cmdline._charset);
 	}
 }

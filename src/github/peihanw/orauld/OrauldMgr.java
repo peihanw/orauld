@@ -11,15 +11,13 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static github.peihanw.ut.Stdout.*;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 
 public class OrauldMgr {
 
-	public int _sqlCnt;
+	public long _sqlCnt;
 	private final BlockingQueue<OrauldTuple>[] _upQueues;
 	private final OrauldCmdline _cmdline;
 	private Connection _conn;
@@ -96,7 +94,7 @@ public class OrauldMgr {
 				for (int i = 1; i <= column_cnt_; i++) {
 					_fillTuple(tuple_, _rs, i);
 				}
-				int idx_ = _sqlCnt % _upQueues.length;
+				int idx_ = (int) (_sqlCnt % _upQueues.length);
 				_upQueues[idx_].offer(tuple_, 86400, TimeUnit.SECONDS);
 				_sqlCnt++;
 			}

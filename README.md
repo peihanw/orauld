@@ -20,10 +20,9 @@ $ ant -f ant.xml
 #### Usage syntax
 
 ```
-$ java -cp orauld.jar:../lib/ojdbc14.jar github.peihanw.orauld.OrauldMain
-Usage: -l conn_info -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbosity] [-t]
-Usage: -L login_str -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbosity] [-t]
-Usage: -F login_cfg -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-v verbosity] [-t]
+Usage: -l conn_info -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]
+Usage: -L login_str -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]
+Usage: -F login_cfg -q query_sql -o bcp_fnm [-d delimiter] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]
 eg   :        -l usr@sid:127.0.0.1:1521 -q "select * from table_name" -o uld.bcp
 eg   : -L usr/passwd@sid:127.0.0.1:1521 -q "select * from table_name" -o uld.bcp
 eg   : -F $HOME/etc/mytest_db_login.cfg -q "select * from table_name" -o uld.bcp
@@ -35,6 +34,7 @@ eg   : -F $HOME/etc/mytest_db_login.cfg -q "select * from table_name" -o uld.bcp
      : -d : default delimiter is pipe char '|'
      : -c : default using JVM default encoding, support GB18030/UTF-8 etc.
      : -w : default 2, worker thread number, should between 1 and 4
+     : -s : default 0 (no split), open a new bcp file every split_lines, bcp files will be sequential numbered with '_%09d'
      : -v : default 3, 0:ERO, 1:WRN, 2:INF, 3:DBG, 4:TRC
      : -t : default no trim for CHAR type
 Usage: -l/L/F login -q query_sql -O ctl_fnm [-d delimiter] [-c charset] [-v verbosity]
