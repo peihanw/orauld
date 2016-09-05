@@ -103,7 +103,7 @@ public class OrauldDmpRunnable implements Runnable {
 			P(DBG, "%,d records dumped, up (%s), dn (%s)", _dmpCnt, PubMethod.Collection2Str(up_sizes_, ","),
 				PubMethod.Collection2Str(up_sizes_, ","));
 		}
-		if (_splitCnt >= _cmdline._splitLines) {
+		if (_cmdline._splitLines > 0 && _splitCnt >= _cmdline._splitLines) {
 			PubMethod.Close(_pw);
 			_pw = null;
 			_splitCnt = 0;
