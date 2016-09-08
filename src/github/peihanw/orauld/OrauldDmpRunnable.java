@@ -133,5 +133,8 @@ public class OrauldDmpRunnable implements Runnable {
 		osw_ = new OutputStreamWriter(fos_, _cmdline._charset);
 		_pw = new PrintWriter(osw_);
 		P(INF, "%s opened for writing, charset [%s]", bcp_fnm_, _cmdline._charset);
+		if (_cmdline._header) {
+			_pw.println(_cmdline._headerLine);
+		}
 	}
 }

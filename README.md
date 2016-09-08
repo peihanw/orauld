@@ -20,9 +20,9 @@ $ ant -f ant.xml
 #### Usage syntax
 
 ```
-Usage: -l conn_info -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]
-Usage: -L login_str -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]
-Usage: -F login_cfg -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]
+Usage: -l conn_info -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-h] [-t]
+Usage: -L login_str -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-h] [-t]
+Usage: -F login_cfg -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-h] [-t]
 eg   :        -l usr@sid:127.0.0.1:1521 -q "select * from table_name" -o uld.bcp
 eg   : -L usr/passwd@sid:127.0.0.1:1521 -q "select * from table_name" -o uld.bcp
 eg   : -F $HOME/etc/mytest_db_login.cfg -q "select * from table_name" -o uld.bcp
@@ -37,8 +37,9 @@ eg   : -F $HOME/etc/mytest_db_login.cfg -q "select * from table_name" -o uld.bcp
      : -w : default 2, worker thread number, should between 1 and 4
      : -s : default 0 (no split), open a new bcp file every split_lines, bcp files will be sequential numbered with '_%09d'
      : -v : default 3, 0:ERO, 1:WRN, 2:INF, 3:DBG, 4:TRC
+     : -h : default no header line
      : -t : default no trim for CHAR type
-Usage: -l/L/F login -q query_sql -O ctl_fnm [-d delimiter] [-D eor_str] [-c charset] [-v verbosity]
+Usage: -l/L/F login -q query_sql -O ctl_fnm [-d delimiter] [-D eor_str] [-c charset] [-v verbosity] [-h]
 eg   : -L usr/passwd@sid:dbhost -q "select x,y,z from some_view" -D #EOR# -O table_name.ctl
      : -O : ctl_fnm --> sqlldr control file name, file_name without .ctl is the table_name
 ```

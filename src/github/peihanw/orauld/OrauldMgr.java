@@ -113,13 +113,22 @@ public class OrauldMgr {
 	}
 
 	private void _printMeta() throws Exception {
+		StringBuilder sb_ = new StringBuilder();
 		int column_cnt_ = _meta.getColumnCount();
 		_columnTypes = new int[column_cnt_ + 1];
 		for (int i = 1; i <= column_cnt_; i++) {
 			_columnTypes[i] = _meta.getColumnType(i);
 			P(DBG, "column %3d, [%s] [%s:%d:%d] [%d] [%s]", i, _meta.getColumnName(i), _meta.getColumnTypeName(i),
 				_meta.getPrecision(i), _meta.getScale(i), _meta.getColumnType(i), _meta.getColumnClassName(i));
+			if (i > 1) {
+				sb_.append(_cmdline._delimiter);
+			}
+			sb_.append(_meta.getColumnName(i));
 		}
+		if (!PubMethod.IsEmpty(_cmdline._eorStr)) {
+			sb_.append(_cmdline._eorStr);
+		}
+		_cmdline._headerLine = sb_.substring(0);
 		OrauldWrkRunnable._ColumnTypes = _columnTypes;
 		_printCtl();
 	}
@@ -134,6 +143,9 @@ public class OrauldMgr {
 		OutputStreamWriter osw_ = new OutputStreamWriter(fos_, _cmdline._charset);
 		PrintWriter pw_ = new PrintWriter(osw_);
 		P(INF, "%s opened for writing, charset [%s], table_name [%s]", _cmdline._ctlFnm, _cmdline._charset, table_name_);
+		if (_cmdline._header) {
+			pw_.printf("OPTIONS (SKIP=1)%n", table_name_);
+		}
 		pw_.printf("LOAD DATA INFILE *", table_name_);
 		if (PubMethod.IsEmpty(_cmdline._eorStr)) {
 			pw_.printf("%n");

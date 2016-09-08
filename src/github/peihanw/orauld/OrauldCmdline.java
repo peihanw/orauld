@@ -26,8 +26,10 @@ public class OrauldCmdline {
 	public long _splitLines = 0;
 	public int _verbosity = 3;
 	public String _charset;
+	public boolean _header;
 	public boolean _trimChar;
 	public boolean _needReadPassword = false;
+	public String _headerLine;
 	public OrauldLoginRec _loginRec = new OrauldLoginRec();
 
 	static {
@@ -43,7 +45,7 @@ public class OrauldCmdline {
 	}
 
 	public void init(String[] args) {
-		Getopt g = new Getopt("sqluld", args, ":l:L:F:q:o:O:d:D:c:w:s:v:t");
+		Getopt g = new Getopt("sqluld", args, ":l:L:F:q:o:O:d:D:c:w:s:v:ht");
 		int c;
 		while ((c = g.getopt()) != -1) {
 			switch (c) {
@@ -96,8 +98,12 @@ public class OrauldCmdline {
 						_verbosity = 4;
 					}
 					break;
+				case 'h':
+					_header = true;
+					break;
 				case 't':
 					_trimChar = true;
+					break;
 				case '?':
 					break; // getopt() already printed an error
 				default:
@@ -146,6 +152,7 @@ public class OrauldCmdline {
 		P(DBG, "wrk_num     [%d]", _wrkNum);
 		P(DBG, "split_lines [%d]", _splitLines);
 		P(DBG, "verbosity   [%d]", _verbosity);
+		P(DBG, "header      [%s]", _header ? "true" : "false");
 		P(DBG, "trim        [%s]", _trimChar ? "true" : "false");
 	}
 
@@ -235,11 +242,11 @@ public class OrauldCmdline {
 	private void _usage(int jvm_exit_code) {
 		String newline_ = String.format("%n");
 		StringBuilder sb_ = new StringBuilder();
-		sb_.append("Usage: -l conn_info -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]");
+		sb_.append("Usage: -l conn_info -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-h] [-t]");
 		sb_.append(newline_);
-		sb_.append("Usage: -L login_str -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]");
+		sb_.append("Usage: -L login_str -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-h] [-t]");
 		sb_.append(newline_);
-		sb_.append("Usage: -F login_cfg -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-t]");
+		sb_.append("Usage: -F login_cfg -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-h] [-t]");
 		sb_.append(newline_);
 		sb_.append("eg   :        -l usr@sid:127.0.0.1:1521 -q \"select * from table_name\" -o uld.bcp");
 		sb_.append(newline_);
@@ -269,9 +276,11 @@ public class OrauldCmdline {
 		sb_.append(newline_);
 		sb_.append("     : -v : default 3, 0:ERO, 1:WRN, 2:INF, 3:DBG, 4:TRC");
 		sb_.append(newline_);
+		sb_.append("     : -h : default no header line");
+		sb_.append(newline_);
 		sb_.append("     : -t : default no trim for CHAR type");
 		sb_.append(newline_);
-		sb_.append("Usage: -l/L/F login -q query_sql -O ctl_fnm [-d delimiter] [-D eor_str] [-c charset] [-v verbosity]");
+		sb_.append("Usage: -l/L/F login -q query_sql -O ctl_fnm [-d delimiter] [-D eor_str] [-c charset] [-v verbosity] [-h]");
 		sb_.append(newline_);
 		sb_.append("eg   : -L usr/passwd@sid:dbhost -q \"select x,y,z from some_view\" -D #EOR# -O table_name.ctl");
 		sb_.append(newline_);
