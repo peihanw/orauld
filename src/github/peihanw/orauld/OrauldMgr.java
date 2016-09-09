@@ -45,7 +45,11 @@ public class OrauldMgr {
 			return 1;
 		} finally {
 			if (!connect_ok_) {
-				_emitEOF();
+				try {
+					_emitEOF();
+				} catch (Exception e) {
+					P(ERO, e, "_emitEOF exception");
+				}
 			}
 		}
 
@@ -95,7 +99,7 @@ public class OrauldMgr {
 					_fillTuple(tuple_, _rs, i);
 				}
 				int idx_ = (int) (_sqlCnt % _upQueues.length);
-				_upQueues[idx_].offer(tuple_, 86400, TimeUnit.SECONDS);
+				_upQueues[idx_].offer(tuple_, _cmdline._queueOfferTimeout, TimeUnit.SECONDS);
 				_sqlCnt++;
 			}
 		}
@@ -103,12 +107,12 @@ public class OrauldMgr {
 		P(INF, "%d EOF tuple emitted, _sqlCnt=%d", _upQueues.length, _sqlCnt);
 	}
 
-	private void _emitEOF() {
+	private void _emitEOF() throws Exception {
 		OrauldTuple tuple_ = null;
 		for (int i = 0; i < _upQueues.length; ++i) {
 			tuple_ = new OrauldTuple(1);
 			tuple_._idx = -1;
-			_upQueues[i].add(tuple_);
+			_upQueues[i].offer(tuple_, _cmdline._queueOfferTimeout, TimeUnit.SECONDS);
 		}
 	}
 

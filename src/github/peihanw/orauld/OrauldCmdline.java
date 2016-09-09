@@ -28,8 +28,10 @@ public class OrauldCmdline {
 	public String _charset;
 	public boolean _header;
 	public boolean _trimChar;
+
 	public boolean _needReadPassword = false;
 	public String _headerLine;
+	public final int _queueOfferTimeout = 60;
 	public OrauldLoginRec _loginRec = new OrauldLoginRec();
 
 	static {
