@@ -1,0 +1,4 @@
+Since Oracle's JDBC driver(ojdbc14.jar) is required to compile and run this tool program,
+you should agree with 'Oracle Technology Network License Agreement'.
+For detail infomation, please refer this link:
+http://www.oracle.com/technetwork/licenses/distribution-license-152002.html
