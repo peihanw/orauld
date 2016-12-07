@@ -1,5 +1,8 @@
 build.xml
 manifest.mf
+.classpath
+.project
+.settings/
 ant-build/
 build/
 dist/
