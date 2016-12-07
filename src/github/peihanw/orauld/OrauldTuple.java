@@ -81,56 +81,57 @@ public class OrauldTuple {
 		}
 		int column_type_ = column_types[idx];
 		switch (column_type_) {
-			case 2: // NUMBER, java.math.BigDecimal
-				if (_bytes[idx] != null) {
-					NUMBER number_ = new NUMBER(_bytes[idx]);
-					sb.append(number_.bigDecimalValue().toString());
+		case 2: // NUMBER, java.math.BigDecimal
+			if (_bytes[idx] != null) {
+				NUMBER number_ = new NUMBER(_bytes[idx]);
+				sb.append(number_.bigDecimalValue().toString());
+			}
+			break;
+		case 12: // VARCHAR/VARCHAR2
+		case -8: // ROWID
+			if (_bytes[idx] != null) {
+				String varchar_ = new String(_bytes[idx]);
+				sb.append(varchar_);
+			}
+			break;
+		case 1: // CHAR
+			if (_bytes[idx] != null) {
+				String char_ = new String(_bytes[idx]);
+				sb.append(trim ? char_.trim() : char_);
+			}
+			break;
+		case 91: // DATE
+		case 93: // TIMESTAMP
+			// TODO: support TIME ZONE
+			if (_bytes[idx] != null) {
+				int cc_ = ((int) _bytes[idx][0] & 0xff) - 100;
+				int yy_ = ((int) _bytes[idx][1] & 0xff) - 100;
+				int mm_ = (int) _bytes[idx][2];
+				int dd_ = (int) _bytes[idx][3];
+				int hh_ = ((int) _bytes[idx][4]) - 1;
+				int mi_ = ((int) _bytes[idx][5]) - 1;
+				int ss_ = ((int) _bytes[idx][6]) - 1;
+				sb.append(String.format("%02d%02d-%02d-%02d %02d:%02d:%02d", cc_, yy_, mm_, dd_, hh_, mi_, ss_));
+				if (column_type_ == 93 && _bytes[idx].length == 11) {
+					int nano_ = ByteBuffer.wrap(_bytes[idx], 7, 4).getInt();
+					sb.append(String.format(".%03d", nano_ / 1000000));
 				}
-				break;
-			case 12: // VARCHAR/VARCHAR2
-			case -8: // ROWID
-				if (_bytes[idx] != null) {
-					String varchar_ = new String(_bytes[idx]);
-					sb.append(varchar_);
-				}
-				break;
-			case 1: // CHAR
-				if (_bytes[idx] != null) {
-					String char_ = new String(_bytes[idx]);
-					sb.append(trim ? char_.trim() : char_);
-				}
-				break;
-			case 91: // DATE
-			case 93: // TIMESTAMP
-				if (_bytes[idx] != null) {
-					int cc_ = ((int) _bytes[idx][0] & 0xff) - 100;
-					int yy_ = ((int) _bytes[idx][1] & 0xff) - 100;
-					int mm_ = (int) _bytes[idx][2];
-					int dd_ = (int) _bytes[idx][3];
-					int hh_ = ((int) _bytes[idx][4]) - 1;
-					int mi_ = ((int) _bytes[idx][5]) - 1;
-					int ss_ = ((int) _bytes[idx][6]) - 1;
-					sb.append(String.format("%02d%02d-%02d-%02d %02d:%02d:%02d", cc_, yy_, mm_, dd_, hh_, mi_, ss_));
-					if (column_type_ == 93 && _bytes[idx].length == 11) {
-						int nano_ = ByteBuffer.wrap(_bytes[idx], 7, 4).getInt();
-						sb.append(String.format(".%03d", nano_ / 1000000));
-					}
-				}
-				break;
-			case 2005: // CLOB, oracle.sql.CLOB cast to java.sql.Clob
-				if (_cells[idx] != null) {
-					Clob clob_ = (Clob) _cells[idx];
-					sb.append(clob_.getSubString(1, (int) clob_.length()));
-				}
-				break;
-			case 2004: // BLOB, oracle.sql.BLOB
-				break;
-			default: // ?, Object
-				if (_cells[idx] != null) {
-					Object obj_ = _cells[idx];
-					sb.append(obj_.toString());
-				}
-				break;
+			}
+			break;
+		case 2005: // CLOB, oracle.sql.CLOB cast to java.sql.Clob
+			if (_cells[idx] != null) {
+				Clob clob_ = (Clob) _cells[idx];
+				sb.append(clob_.getSubString(1, (int) clob_.length()));
+			}
+			break;
+		case 2004: // BLOB, oracle.sql.BLOB
+			break;
+		default: // ?, Object
+			if (_cells[idx] != null) {
+				Object obj_ = _cells[idx];
+				sb.append(obj_.toString());
+			}
+			break;
 		}
 	}
 }

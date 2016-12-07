@@ -66,8 +66,12 @@ $ java -cp orauld.jar:../lib/ojdbc14.jar github.peihanw.orauld.OrauldMain \
 
 #### Memo
 
-- Develop environment is NetBeans 8.x.
 - Please download ojdbc14.jar yourself.
-- Oracle jdbc driver 'ojdbc6.jar & orai18n.jar' are not supported.
+- Oracle jdbc drivers 'ojdbc6.jar & orai18n.jar' are not recommended. Test results show that 'ojdbc6.jar' may cause performance dropping down about 30-50%.
 - Test environment is Oracle 11g (11.2.0.4.0).
+
+#### TODO
+
+- Support DATE/TIMESTAMP WITH TIMEZONE.
+- Replace JDK LinkedBlockingQueue with LMAX Disruptor to impove performance.
 

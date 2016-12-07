@@ -50,7 +50,7 @@ public class OrauldWrkRunnable implements Runnable {
 				}
 				_idleCnt = 0;
 				if (tuple_.isEOF()) {
-					P(INF, "EOF tuple detected");
+					P(DBG, "EOF tuple detected");
 					_dnQueue.offer(tuple_, _cmdline._queueOfferTimeout, TimeUnit.SECONDS);
 					break;
 				}

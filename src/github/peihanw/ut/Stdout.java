@@ -13,7 +13,7 @@ public class Stdout {
 	public static final int TRC = 4;
 	public static int _DftLevel = DBG;
 	public static String _JvmPid = null;
-	public static final String[] _LevelNames = {"ERO", "WRN", "INF", "DBG", "TRC"};
+	public static final String[] _LevelNames = { "ERO", "WRN", "INF", "DBG", "TRC" };
 
 	static {
 		_DftLevel = DBG;
@@ -39,7 +39,7 @@ public class Stdout {
 			fnm_ = fnm_.substring(0, fnm_.length() - 5);
 		}
 		System.out.printf("%s|%s|%s|%s|%s|%s|%s|%s%n", sdf_.format(new Date()), _LevelNames[level_idx_], _JvmPid,
-			current_thr_.getName(), fnm_, stack_elem_.getLineNumber(), stack_elem_.getMethodName(), FmtArgs(fmt, args));
+				current_thr_.getName(), fnm_, stack_elem_.getLineNumber(), stack_elem_.getMethodName(), FmtArgs(fmt, args));
 	}
 
 	public static void P(int log_level, Throwable e, String fmt, Object... args) {
@@ -55,7 +55,7 @@ public class Stdout {
 			fnm_ = fnm_.substring(0, fnm_.length() - 5);
 		}
 		System.out.printf("%s|%s|%s|%s|%s|%s|%s|%s%n", sdf_.format(new Date()), _LevelNames[level_idx_], _JvmPid,
-			current_thr_.getName(), fnm_, stack_elem_.getLineNumber(), stack_elem_.getMethodName(), FmtArgs(fmt, args));
+				current_thr_.getName(), fnm_, stack_elem_.getLineNumber(), stack_elem_.getMethodName(), FmtArgs(fmt, args));
 		if (e != null) {
 			e.printStackTrace();
 		}

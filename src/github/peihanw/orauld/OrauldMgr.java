@@ -1,6 +1,7 @@
 package github.peihanw.orauld;
 
 import github.peihanw.ut.PubMethod;
+import oracle.jdbc.OracleStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -45,11 +46,7 @@ public class OrauldMgr {
 			return 1;
 		} finally {
 			if (!connect_ok_) {
-				try {
-					_emitEOF();
-				} catch (Exception e) {
-					P(ERO, e, "_emitEOF exception");
-				}
+				_emitEOFwithoutThrow();
 			}
 		}
 
@@ -57,6 +54,7 @@ public class OrauldMgr {
 			_exec();
 		} catch (Exception e) {
 			P(WRN, e, "call _exec() exception");
+			_emitEOFwithoutThrow();
 			return 1;
 		}
 
@@ -71,7 +69,8 @@ public class OrauldMgr {
 	}
 
 	private boolean _initConn() {
-		String jdbc_url_ = String.format("jdbc:oracle:thin:@%s:%d:%s", _cmdline._loginRec._host, _cmdline._loginRec._port, _cmdline._loginRec._sid);
+		String jdbc_url_ = String.format("jdbc:oracle:thin:@%s:%d:%s", _cmdline._loginRec._host, _cmdline._loginRec._port,
+				_cmdline._loginRec._sid);
 		try {
 			Class.forName("oracle.jdbc.driver.OracleDriver");
 			_conn = DriverManager.getConnection(jdbc_url_, _cmdline._loginRec._usr, _cmdline._loginRec._password);
@@ -86,6 +85,7 @@ public class OrauldMgr {
 	private void _exec() throws Exception {
 		_stmt = _conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 		_stmt.setFetchSize(1000);
+		((OracleStatement) _stmt).setRowPrefetch(1000);
 		_rs = _stmt.executeQuery(_cmdline._querySql);
 		P(INF, "query executed, fetchSize=%d, maxRows=%d", _stmt.getFetchSize(), _stmt.getMaxRows());
 		_meta = _rs.getMetaData();
@@ -107,6 +107,14 @@ public class OrauldMgr {
 		P(INF, "%d EOF tuple emitted, _sqlCnt=%d", _upQueues.length, _sqlCnt);
 	}
 
+	private void _emitEOFwithoutThrow() {
+		try {
+			_emitEOF();
+		} catch (Exception e) {
+			P(ERO, e, "_emitEOF exception");
+		}
+	}
+
 	private void _emitEOF() throws Exception {
 		OrauldTuple tuple_ = null;
 		for (int i = 0; i < _upQueues.length; ++i) {
@@ -123,7 +131,7 @@ public class OrauldMgr {
 		for (int i = 1; i <= column_cnt_; i++) {
 			_columnTypes[i] = _meta.getColumnType(i);
 			P(DBG, "column %3d, [%s] [%s:%d:%d] [%d] [%s]", i, _meta.getColumnName(i), _meta.getColumnTypeName(i),
-				_meta.getPrecision(i), _meta.getScale(i), _meta.getColumnType(i), _meta.getColumnClassName(i));
+					_meta.getPrecision(i), _meta.getScale(i), _meta.getColumnType(i), _meta.getColumnClassName(i));
 			if (i > 1) {
 				sb_.append(_cmdline._delimiter);
 			}
@@ -193,40 +201,40 @@ public class OrauldMgr {
 
 	private void _fillTuple(OrauldTuple tuple, ResultSet rs, int idx) throws SQLException {
 		switch (_columnTypes[idx]) {
-			case 2: // NUMBER, java.math.BigDecimal, (tuple._cells[idx] = rs.getBigDecimal(idx);)
-				tuple._bytes[idx] = rs.getBytes(idx);
-				break;
-			case 12: // VARCHAR/VARCHAR2
-			case 1: // CHAR
-			case 91: // DATE
-			case 93: // TIMESTAMP
-			case -8: // ROWID
-				tuple._bytes[idx] = rs.getBytes(idx);
-				break;
-			case 2005: // CLOB
-				tuple._cells[idx] = rs.getClob(idx);
-				break;
-			case 2004: // BLOB, do nothing, always regard as NULL
-				break;
-			default:
-				byte[] bytes_ = rs.getBytes(idx);
-				if (bytes_ != null) {
-					StringBuilder sb_ = new StringBuilder();
-					sb_.append("[");
-					int i = 0;
-					for (byte b : bytes_) {
-						if (i == 0) {
-							sb_.append(String.format("%02x", b));
-						} else {
-							sb_.append(String.format(" %02x", b));
-						}
-						++i;
+		case 2: // NUMBER, java.math.BigDecimal, (tuple._cells[idx] = rs.getBigDecimal(idx);)
+			tuple._bytes[idx] = rs.getBytes(idx);
+			break;
+		case 12: // VARCHAR/VARCHAR2
+		case 1: // CHAR
+		case 91: // DATE
+		case 93: // TIMESTAMP
+		case -8: // ROWID
+			tuple._bytes[idx] = rs.getBytes(idx);
+			break;
+		case 2005: // CLOB
+			tuple._cells[idx] = rs.getClob(idx);
+			break;
+		case 2004: // BLOB, do nothing, always regard as NULL
+			break;
+		default:
+			byte[] bytes_ = rs.getBytes(idx);
+			if (bytes_ != null) {
+				StringBuilder sb_ = new StringBuilder();
+				sb_.append("[");
+				int i = 0;
+				for (byte b : bytes_) {
+					if (i == 0) {
+						sb_.append(String.format("%02x", b));
+					} else {
+						sb_.append(String.format(" %02x", b));
 					}
-					sb_.append("]");
-					P(WRN, "_columnTypes[%d] is %d, sample guts: %s", idx, _columnTypes[idx], sb_.substring(0));
-					throw new SQLException("unsupported column type " + _columnTypes[idx]);
+					++i;
 				}
-				break;
+				sb_.append("]");
+				P(WRN, "_columnTypes[%d] is %d, sample guts: %s", idx, _columnTypes[idx], sb_.substring(0));
+				throw new SQLException("unsupported column type " + _columnTypes[idx]);
+			}
+			break;
 		}
 	}
 

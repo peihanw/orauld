@@ -3,8 +3,6 @@ package github.peihanw.orauld;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -18,7 +16,7 @@ public class OrauldDmpRunnable implements Runnable {
 	public long _dmpCnt;
 	public long _splitCnt;
 	public int _splitSeq;
-	private final BlockingQueue<OrauldTuple>[] _upQueues;
+	// private final BlockingQueue<OrauldTuple>[] _upQueues;
 	private final BlockingQueue<OrauldTuple>[] _dnQueues;
 	private final boolean[] _eofs;
 	private PrintWriter _pw;
@@ -28,7 +26,7 @@ public class OrauldDmpRunnable implements Runnable {
 	private static Pattern _FnmSfx = Pattern.compile("\\.[0-9A-Za-z]+$");
 
 	public OrauldDmpRunnable(BlockingQueue<OrauldTuple>[] up_queues, BlockingQueue<OrauldTuple>[] dn_queues) {
-		_upQueues = up_queues;
+		// _upQueues = up_queues;
 		_dnQueues = dn_queues;
 		_eofs = new boolean[_dnQueues.length];
 		_cmdline = OrauldCmdline.GetInstance();
@@ -99,14 +97,7 @@ public class OrauldDmpRunnable implements Runnable {
 		_dmpCnt++;
 		_splitCnt++;
 		if (_dmpCnt % 100000 == 0) {
-			List<Integer> up_sizes_ = new ArrayList<Integer>();
-			List<Integer> dn_sizes_ = new ArrayList<Integer>();
-			for (int i = 0; i < _upQueues.length; ++i) {
-				up_sizes_.add(_upQueues[i].size());
-				dn_sizes_.add(_dnQueues[i].size());
-			}
-			P(DBG, "%,d records dumped, up (%s), dn (%s)", _dmpCnt, PubMethod.Collection2Str(up_sizes_, ","),
-				PubMethod.Collection2Str(up_sizes_, ","));
+			P(DBG, "%,d records dumped", _dmpCnt);
 		}
 		if (_cmdline._splitLines > 0 && _splitCnt >= _cmdline._splitLines) {
 			PubMethod.Close(_pw);

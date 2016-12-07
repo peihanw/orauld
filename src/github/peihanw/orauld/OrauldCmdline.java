@@ -51,66 +51,66 @@ public class OrauldCmdline {
 		int c;
 		while ((c = g.getopt()) != -1) {
 			switch (c) {
-				case 'L':
-					_loginStr = g.getOptarg();
-					break;
-				case 'l':
-					_loginStr = g.getOptarg();
-					_needReadPassword = true;
-					break;
-				case 'F':
-					_loginCfg = g.getOptarg();
-					break;
-				case 'q':
-					_querySql = g.getOptarg();
-					break;
-				case 'o':
-					_bcpFnm = g.getOptarg();
-					break;
-				case 'O':
-					_ctlFnm = g.getOptarg();
-					break;
-				case 'd':
-					_delimiter = g.getOptarg();
-					break;
-				case 'D':
-					_eorStr = g.getOptarg();
-					break;
-				case 'c':
-					_charset = g.getOptarg();
-					break;
-				case 'w':
-					_wrkNum = Integer.parseInt(g.getOptarg());
-					if (_wrkNum <= 0) {
-						_wrkNum = 1;
-					} else if (_wrkNum > 4) {
-						_wrkNum = 4;
-					}
-					break;
-				case 's':
-					_splitLines = Long.parseLong(g.getOptarg());
-					if (_splitLines > 0 && _splitLines < 10000) {
-						P(WRN, "split_lines %d too small, set to 10000", _splitLines);
-						_splitLines = 10000;
-					}
-					break;
-				case 'v':
-					_verbosity = Integer.parseInt(g.getOptarg());
-					if (_verbosity < 0 || _verbosity > 4) {
-						_verbosity = 4;
-					}
-					break;
-				case 'h':
-					_header = true;
-					break;
-				case 't':
-					_trimChar = true;
-					break;
-				case '?':
-					break; // getopt() already printed an error
-				default:
-					Stdout.P(Stdout.WRN, "getopt() returned [%c]", c);
-					break;
+			case 'L':
+				_loginStr = g.getOptarg();
+				break;
+			case 'l':
+				_loginStr = g.getOptarg();
+				_needReadPassword = true;
+				break;
+			case 'F':
+				_loginCfg = g.getOptarg();
+				break;
+			case 'q':
+				_querySql = g.getOptarg();
+				break;
+			case 'o':
+				_bcpFnm = g.getOptarg();
+				break;
+			case 'O':
+				_ctlFnm = g.getOptarg();
+				break;
+			case 'd':
+				_delimiter = g.getOptarg();
+				break;
+			case 'D':
+				_eorStr = g.getOptarg();
+				break;
+			case 'c':
+				_charset = g.getOptarg();
+				break;
+			case 'w':
+				_wrkNum = Integer.parseInt(g.getOptarg());
+				if (_wrkNum <= 0) {
+					_wrkNum = 1;
+				} else if (_wrkNum > 4) {
+					_wrkNum = 4;
+				}
+				break;
+			case 's':
+				_splitLines = Long.parseLong(g.getOptarg());
+				if (_splitLines > 0 && _splitLines < 10000) {
+					P(WRN, "split_lines %d too small, set to 10000", _splitLines);
+					_splitLines = 10000;
+				}
+				break;
+			case 'v':
+				_verbosity = Integer.parseInt(g.getOptarg());
+				if (_verbosity < 0 || _verbosity > 4) {
+					_verbosity = 4;
+				}
+				break;
+			case 'h':
+				_header = true;
+				break;
+			case 't':
+				_trimChar = true;
+				break;
+			case '?':
+				break; // getopt() already printed an error
+			default:
+				P(WRN, "getopt() returned [%c]", c);
+				break;
 			}
 		}
 
@@ -126,7 +126,7 @@ public class OrauldCmdline {
 		if (_needReadPassword) {
 			Console console_ = System.console();
 			if (console_ == null) {
-				Stdout.P(Stdout.ERO, "can not get console object for read password");
+				P(ERO, "can not get console object for read password");
 				_usage(1);
 			} else {
 				_loginRec._password = new String(console_.readPassword("Please input password "));
@@ -244,11 +244,14 @@ public class OrauldCmdline {
 	private void _usage(int jvm_exit_code) {
 		String newline_ = String.format("%n");
 		StringBuilder sb_ = new StringBuilder();
-		sb_.append("Usage: -l conn_info -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-h] [-t]");
+		sb_.append(
+				"Usage: -l conn_info -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-h] [-t]");
 		sb_.append(newline_);
-		sb_.append("Usage: -L login_str -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-h] [-t]");
+		sb_.append(
+				"Usage: -L login_str -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-h] [-t]");
 		sb_.append(newline_);
-		sb_.append("Usage: -F login_cfg -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-h] [-t]");
+		sb_.append(
+				"Usage: -F login_cfg -q query_sql -o bcp_fnm [-d delimiter] [-D eor_str] [-c charset] [-w wrk_num] [-s split_lines] [-v verbosity] [-h] [-t]");
 		sb_.append(newline_);
 		sb_.append("eg   :        -l usr@sid:127.0.0.1:1521 -q \"select * from table_name\" -o uld.bcp");
 		sb_.append(newline_);
@@ -274,7 +277,8 @@ public class OrauldCmdline {
 		sb_.append(newline_);
 		sb_.append("     : -w : default 2, worker thread number, should between 1 and 4");
 		sb_.append(newline_);
-		sb_.append("     : -s : default 0 (no split), open a new bcp file every split_lines, bcp files will be sequential numbered with '_%09d'");
+		sb_.append(
+				"     : -s : default 0 (no split), open a new bcp file every split_lines, bcp files will be sequential numbered with '_%09d'");
 		sb_.append(newline_);
 		sb_.append("     : -v : default 3, 0:ERO, 1:WRN, 2:INF, 3:DBG, 4:TRC");
 		sb_.append(newline_);
