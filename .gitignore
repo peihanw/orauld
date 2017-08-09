@@ -6,7 +6,9 @@ manifest.mf
 ant-build/
 build/
 dist/
+gradle/
 lib/
 nbproject/
 test/
 bin/
+/.gradle/

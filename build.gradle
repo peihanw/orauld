@@ -1,0 +1,21 @@
+apply plugin: 'java-library'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    api 'info.picocli:picocli:0.9.8'
+    api files('lib/ojdbc14.jar')
+
+    testImplementation 'junit:junit:4.12'
+}
+
+task copyProperties(type: Copy) {
+    from('src/main/java') {
+        include '**/*.properties'
+    }
+    into 'build/classes/java/main'
+}
+
+assemble.dependsOn copyProperties
