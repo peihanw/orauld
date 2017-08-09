@@ -11,6 +11,8 @@
 
 ```
 $ git clone https://github.com/peihanw/orauld.git
+# for v-0.1 branch (Ant manually build)
+$ git checkout v-0.1
 $ cd orauld/
 $ mkdir lib
 $ cp /some/where/ojdbc14.jar ./lib/
