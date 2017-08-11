@@ -3,7 +3,8 @@ package github.peihanw.orauld;
 import static github.peihanw.ut.Stdout.*;
 
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+
+import com.conversantmedia.util.concurrent.DisruptorBlockingQueue;
 
 import github.peihanw.ut.AppTicker;
 
@@ -32,13 +33,13 @@ public class OrauldMain {
 		AppTicker ticker_ = new AppTicker();
 		P(INF, "cmdline parsed and started");
 		cmdline_.print();
-		_UpQueues = (BlockingQueue<OrauldTuple>[]) new BlockingQueue<?>[cmdline_._wrkNum];
-		_DnQueues = (BlockingQueue<OrauldTuple>[]) new BlockingQueue<?>[cmdline_._wrkNum];
+		_UpQueues = (BlockingQueue<OrauldTuple>[]) new DisruptorBlockingQueue<?>[cmdline_._wrkNum];
+		_DnQueues = (BlockingQueue<OrauldTuple>[]) new DisruptorBlockingQueue<?>[cmdline_._wrkNum];
 		_WrkRunnables = new OrauldWrkRunnable[cmdline_._wrkNum];
 		_WrkThreads = new Thread[cmdline_._wrkNum];
 		for (int i = 0; i < cmdline_._wrkNum; ++i) {
-			_UpQueues[i] = new LinkedBlockingQueue<OrauldTuple>(2000);
-			_DnQueues[i] = new LinkedBlockingQueue<OrauldTuple>(2000);
+			_UpQueues[i] = new DisruptorBlockingQueue<OrauldTuple>(2000);
+			_DnQueues[i] = new DisruptorBlockingQueue<OrauldTuple>(2000);
 		}
 
 		_DmpRunnable = new OrauldDmpRunnable(_UpQueues, _DnQueues);

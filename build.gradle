@@ -1,14 +1,28 @@
-apply plugin: 'java-library'
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
+    }
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'java'
 
 repositories {
     jcenter()
 }
 
 dependencies {
-    api 'info.picocli:picocli:0.9.8'
-    api files('lib/ojdbc14.jar')
+    compile 'com.conversantmedia:disruptor:1.2.10'
+    compile files('lib/ojdbc14.jar')
+}
 
-    testImplementation 'junit:junit:4.12'
+shadowJar {
+   mergeServiceFiles()
+   baseName = 'orauld'
+   classifier = null
 }
 
 task copyProperties(type: Copy) {
@@ -18,4 +32,11 @@ task copyProperties(type: Copy) {
     into 'build/classes/java/main'
 }
 
-assemble.dependsOn copyProperties
+jar {
+    manifest {
+        attributes 'Main-Class': 'github.peihanw.orauld.OrauldMain'
+    }
+}
+
+build.dependsOn copyProperties
+build.dependsOn shadowJar
