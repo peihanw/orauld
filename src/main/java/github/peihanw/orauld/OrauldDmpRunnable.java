@@ -5,6 +5,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import github.peihanw.ut.PubMethod;
 import static github.peihanw.ut.Stdout.*;
@@ -16,7 +17,6 @@ public class OrauldDmpRunnable implements Runnable {
 	public long _dmpCnt;
 	public long _splitCnt;
 	public int _splitSeq;
-	// private final BlockingQueue<OrauldTuple>[] _upQueues;
 	private final BlockingQueue<OrauldTuple>[] _dnQueues;
 	private final boolean[] _eofs;
 	private PrintWriter _pw;
@@ -26,7 +26,6 @@ public class OrauldDmpRunnable implements Runnable {
 	private static Pattern _FnmSfx = Pattern.compile("\\.[0-9A-Za-z]+$");
 
 	public OrauldDmpRunnable(BlockingQueue<OrauldTuple>[] up_queues, BlockingQueue<OrauldTuple>[] dn_queues) {
-		// _upQueues = up_queues;
 		_dnQueues = dn_queues;
 		_eofs = new boolean[_dnQueues.length];
 		_cmdline = OrauldCmdline.GetInstance();
@@ -45,6 +44,7 @@ public class OrauldDmpRunnable implements Runnable {
 	@Override
 	public void run() {
 		P(INF, "thread started");
+		OrauldTuple tuple_;
 		boolean end_ = false;
 		int eof_cnt_ = 0;
 		try {
@@ -53,21 +53,18 @@ public class OrauldDmpRunnable implements Runnable {
 					if (_eofs[i]) {
 						++eof_cnt_;
 					} else {
-						OrauldTuple tuple_ = _dnQueues[i].poll(10, TimeUnit.MILLISECONDS);
-						if (tuple_ == null) {
-							if (_terminateFlag) {
-								P(INF, "_terminateFlag detected");
-								end_ = true;
-								break;
-							} else {
-								continue;
-							}
+						tuple_ = _pollTuple(_dnQueues[i]);
+						if (_terminateFlag) {
+							P(INF, "_terminateFlag detected, set end_ flag");
+							end_ = true;
 						}
-						if (tuple_.isEOF()) {
-							P(INF, "EOF tuple detected, i=%d", i);
-							_eofs[i] = true;
-						} else {
-							_dump(tuple_);
+						if (tuple_ != null) {
+							if (tuple_.isEOF()) {
+								P(INF, "EOF tuple detected, i=%d", i);
+								_eofs[i] = true;
+							} else {
+								_dump(tuple_);
+							}
 						}
 					}
 				}
@@ -84,6 +81,31 @@ public class OrauldDmpRunnable implements Runnable {
 			PubMethod.Close(_pw);
 		}
 		P(INF, "thread ended, _dmpCnt=%d", _dmpCnt);
+	}
+
+	private OrauldTuple _pollTuple(BlockingQueue<OrauldTuple> queue) throws Exception {
+		OrauldTuple tuple_;
+		int idle_cnt_ = 0;
+		while (true) {
+			tuple_ = queue.poll(100, TimeUnit.MILLISECONDS);
+			if (tuple_ == null) {
+				++idle_cnt_;
+				if (_terminateFlag) {
+					P(INF, "_terminateFlag detected, idle_cnt_=%d", idle_cnt_);
+					break;
+				} else {
+					if (idle_cnt_ > 6000) {
+						P(WRN, "idle_cnt_=%d, throw timeout exception", idle_cnt_);
+						throw new TimeoutException("dmp poll timeout");
+					} else if (idle_cnt_ % 1000 == 0) {
+						P(INF, "idle_cnt_=%d, please be noticed", idle_cnt_);
+					}
+					continue;
+				}
+			}
+			break;
+		}
+		return tuple_;
 	}
 
 	private void _dump(OrauldTuple tuple) throws Exception {
