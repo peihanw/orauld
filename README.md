@@ -56,11 +56,13 @@ eg   : -L usr/passwd@sid:dbhost -q "select x,y,z from some_view" -D #EOR# -O tab
 ##### simple dump (most common usage)
 
 ```
-## for branch v-0.1
+# for branch v-0.1
 $ java -cp orauld.jar:../lib/ojdbc14.jar \
-## for branch v-0.2 (Gradle shadow fat-jar)
-$ java -cp orauld.jar \
 > github.peihanw.orauld.OrauldMain \
+
+# for branch v-0.2 (Gradle shadow fat-jar)
+$ java -jar orauld.jar \
+
 > -L scott/tiger@orcl:192.168.200.88 \
 > -q "select * from rqst_log where yyyymm=201601" \
 > -o rqst_log_201601.bcp -v 1
@@ -69,11 +71,13 @@ $ java -cp orauld.jar \
 ##### generate a control file according to the table schema
 
 ```
-## for branch v-0.1
+# for branch v-0.1
 $ java -cp orauld.jar:../lib/ojdbc14.jar \
-## for branch v-0.2 (Gradle shadow fat-jar)
-$ java -cp orauld.jar \
 > github.peihanw.orauld.OrauldMain \
+
+# for branch v-0.2 (Gradle shadow fat-jar)
+$ java -jar orauld.jar \
+
 > -L scott/tiger@orcl:192.168.200.88 \
 > -q "select * from rqst_log" \
 > -O rqst_log.ctl
@@ -88,5 +92,5 @@ $ java -cp orauld.jar \
 #### TODO
 
 - Replace JDK LinkedBlockingQueue with com.conversantmedia:disruptor to impove performance. (implemented in branch v-0.2)
-- Support DATE/TIMESTAMP WITH TIMEZONE.
+- Support DATE/TIMESTAMP WITH TIMEZONE. (canceled: no documents for internal timezone codes, please use to_char())
 
