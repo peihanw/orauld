@@ -3,20 +3,25 @@
 
 #### Prerequisites
 
-- jdk 1.6 +
 - Oracle jdbc driver ojdbc14.jar
-- apache Ant for build from source
+- For branch v-0.1: jdk 1.6 + & apache Ant
+- For branch v-0.2: jdk 1.8 + & Gradle (shadow fat-jar)
 
 #### Build
 
 ```
 $ git clone https://github.com/peihanw/orauld.git
-# for v-0.1 branch (Ant manually build)
-$ git checkout v-0.1
 $ cd orauld/
 $ mkdir lib
 $ cp /some/where/ojdbc14.jar ./lib/
+
+# for branch v-0.1 (Ant manually build)
+$ git checkout v-0.1
 $ ant -f ant.xml
+
+# for branch v-0.2 (Gradle build)
+$ git checkout v-0.2
+$ gradle build
 ```
 
 #### Usage syntax
@@ -51,7 +56,11 @@ eg   : -L usr/passwd@sid:dbhost -q "select x,y,z from some_view" -D #EOR# -O tab
 ##### simple dump (most common usage)
 
 ```
-$ java -cp orauld.jar:../lib/ojdbc14.jar github.peihanw.orauld.OrauldMain \
+## for branch v-0.1
+$ java -cp orauld.jar:../lib/ojdbc14.jar \
+## for branch v-0.2 (Gradle shadow fat-jar)
+$ java -cp orauld.jar \
+> github.peihanw.orauld.OrauldMain \
 > -L scott/tiger@orcl:192.168.200.88 \
 > -q "select * from rqst_log where yyyymm=201601" \
 > -o rqst_log_201601.bcp -v 1
@@ -60,7 +69,11 @@ $ java -cp orauld.jar:../lib/ojdbc14.jar github.peihanw.orauld.OrauldMain \
 ##### generate a control file according to the table schema
 
 ```
-$ java -cp orauld.jar:../lib/ojdbc14.jar github.peihanw.orauld.OrauldMain \
+## for branch v-0.1
+$ java -cp orauld.jar:../lib/ojdbc14.jar \
+## for branch v-0.2 (Gradle shadow fat-jar)
+$ java -cp orauld.jar \
+> github.peihanw.orauld.OrauldMain \
 > -L scott/tiger@orcl:192.168.200.88 \
 > -q "select * from rqst_log" \
 > -O rqst_log.ctl
@@ -74,6 +87,6 @@ $ java -cp orauld.jar:../lib/ojdbc14.jar github.peihanw.orauld.OrauldMain \
 
 #### TODO
 
+- Replace JDK LinkedBlockingQueue with com.conversantmedia:disruptor to impove performance. (implemented in branch v-0.2)
 - Support DATE/TIMESTAMP WITH TIMEZONE.
-- Replace JDK LinkedBlockingQueue with LMAX Disruptor to impove performance.
 
