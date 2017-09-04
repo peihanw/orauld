@@ -81,27 +81,27 @@ public class OrauldTuple {
 		}
 		int column_type_ = column_types[idx];
 		switch (column_type_) {
-		case 2: // NUMBER, java.math.BigDecimal
+		case OrauldConst.ORA_TYPE_2_NUMBER: // java.math.BigDecimal
 			if (_bytes[idx] != null) {
 				NUMBER number_ = new NUMBER(_bytes[idx]);
 				sb.append(number_.bigDecimalValue().toString());
 			}
 			break;
-		case 12: // VARCHAR/VARCHAR2
-		case -8: // ROWID
+		case OrauldConst.ORA_TYPE_12_VARCHAR: // includes VARCHAR2
+		case OrauldConst.ORA_TYPE_M8_ROWID:
 			if (_bytes[idx] != null) {
 				String varchar_ = new String(_bytes[idx]);
 				sb.append(varchar_);
 			}
 			break;
-		case 1: // CHAR
+		case OrauldConst.ORA_TYPE_1_CHAR:
 			if (_bytes[idx] != null) {
 				String char_ = new String(_bytes[idx]);
 				sb.append(trim ? char_.trim() : char_);
 			}
 			break;
-		case 91: // DATE
-		case 93: // TIMESTAMP
+		case OrauldConst.ORA_TYPE_91_DATE:
+		case OrauldConst.ORA_TYPE_93_TIMESTAMP:
 			// TODO: support TIME ZONE
 			if (_bytes[idx] != null) {
 				int cc_ = ((int) _bytes[idx][0] & 0xff) - 100;
@@ -118,13 +118,13 @@ public class OrauldTuple {
 				}
 			}
 			break;
-		case 2005: // CLOB, oracle.sql.CLOB cast to java.sql.Clob
+		case OrauldConst.ORA_TYPE_2005_CLOB: // cast oracle.sql.CLOB to java.sql.Clob
 			if (_cells[idx] != null) {
 				Clob clob_ = (Clob) _cells[idx];
 				sb.append(clob_.getSubString(1, (int) clob_.length()));
 			}
 			break;
-		case 2004: // BLOB, oracle.sql.BLOB
+		case OrauldConst.ORA_TYPE_2004_BLOB: // just skip oracle.sql.BLOB
 			break;
 		default: // ?, Object
 			if (_cells[idx] != null) {

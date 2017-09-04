@@ -9,6 +9,7 @@ buildscript {
 
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'java'
+sourceCompatibility = 1.8
 
 repositories {
     jcenter()

@@ -201,20 +201,20 @@ public class OrauldMgr {
 
 	private void _fillTuple(OrauldTuple tuple, ResultSet rs, int idx) throws SQLException {
 		switch (_columnTypes[idx]) {
-		case 2: // NUMBER, java.math.BigDecimal, (tuple._cells[idx] = rs.getBigDecimal(idx);)
+		case OrauldConst.ORA_TYPE_2_NUMBER: // java.math.BigDecimal, (tuple._cells[idx] = rs.getBigDecimal(idx);)
 			tuple._bytes[idx] = rs.getBytes(idx);
 			break;
-		case 12: // VARCHAR/VARCHAR2
-		case 1: // CHAR
-		case 91: // DATE
-		case 93: // TIMESTAMP
-		case -8: // ROWID
+		case OrauldConst.ORA_TYPE_12_VARCHAR: // includes VARCHAR2
+		case OrauldConst.ORA_TYPE_1_CHAR:
+		case OrauldConst.ORA_TYPE_91_DATE:
+		case OrauldConst.ORA_TYPE_93_TIMESTAMP:
+		case OrauldConst.ORA_TYPE_M8_ROWID:
 			tuple._bytes[idx] = rs.getBytes(idx);
 			break;
-		case 2005: // CLOB
+		case OrauldConst.ORA_TYPE_2005_CLOB:
 			tuple._cells[idx] = rs.getClob(idx);
 			break;
-		case 2004: // BLOB, do nothing, always regard as NULL
+		case OrauldConst.ORA_TYPE_2004_BLOB: // always regard as NULL for BLOB (can not support)
 			break;
 		default:
 			byte[] bytes_ = rs.getBytes(idx);
