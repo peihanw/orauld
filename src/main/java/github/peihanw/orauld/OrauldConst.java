@@ -3,6 +3,8 @@ package github.peihanw.orauld;
 public class OrauldConst {
 	// supported data types
 	public static final int ORA_TYPE_M8_ROWID = -8;
+	public static final int ORA_TYPE_M101_TIMESTAMPTZ = -101;
+	public static final int ORA_TYPE_M102_TIMESTAMPTZL = -102;
 	public static final int ORA_TYPE_1_CHAR = 1;
 	public static final int ORA_TYPE_2_NUMBER = 2;
 	public static final int ORA_TYPE_12_VARCHAR = 12; // includes VARCHAR2

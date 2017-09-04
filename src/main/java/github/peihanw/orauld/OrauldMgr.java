@@ -208,6 +208,8 @@ public class OrauldMgr {
 		case OrauldConst.ORA_TYPE_1_CHAR:
 		case OrauldConst.ORA_TYPE_91_DATE:
 		case OrauldConst.ORA_TYPE_93_TIMESTAMP:
+		case OrauldConst.ORA_TYPE_M101_TIMESTAMPTZ:
+		case OrauldConst.ORA_TYPE_M102_TIMESTAMPTZL:
 		case OrauldConst.ORA_TYPE_M8_ROWID:
 			tuple._bytes[idx] = rs.getBytes(idx);
 			break;

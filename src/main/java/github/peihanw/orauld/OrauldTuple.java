@@ -4,7 +4,10 @@ import java.nio.ByteBuffer;
 import java.sql.Clob;
 import java.sql.SQLException;
 
+import github.peihanw.ut.PubMethod;
 import oracle.sql.NUMBER;
+import oracle.sql.ZONEIDMAP;
+
 import static github.peihanw.ut.Stdout.*;
 
 // =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =  =
@@ -102,7 +105,8 @@ public class OrauldTuple {
 			break;
 		case OrauldConst.ORA_TYPE_91_DATE:
 		case OrauldConst.ORA_TYPE_93_TIMESTAMP:
-			// TODO: support TIME ZONE
+		case OrauldConst.ORA_TYPE_M101_TIMESTAMPTZ:
+		case OrauldConst.ORA_TYPE_M102_TIMESTAMPTZL: // TODO: refactory and adjust to local zone
 			if (_bytes[idx] != null) {
 				int cc_ = ((int) _bytes[idx][0] & 0xff) - 100;
 				int yy_ = ((int) _bytes[idx][1] & 0xff) - 100;
@@ -112,9 +116,33 @@ public class OrauldTuple {
 				int mi_ = ((int) _bytes[idx][5]) - 1;
 				int ss_ = ((int) _bytes[idx][6]) - 1;
 				sb.append(String.format("%02d%02d-%02d-%02d %02d:%02d:%02d", cc_, yy_, mm_, dd_, hh_, mi_, ss_));
-				if (column_type_ == 93 && _bytes[idx].length == 11) {
-					int nano_ = ByteBuffer.wrap(_bytes[idx], 7, 4).getInt();
+				int nano_ = 0;
+				if (_bytes[idx].length >= 11) {
+					nano_ = ByteBuffer.wrap(_bytes[idx], 7, 4).getInt();
+				}
+				if (column_type_ != OrauldConst.ORA_TYPE_91_DATE) {
 					sb.append(String.format(".%03d", nano_ / 1000000));
+				}
+				if (column_type_ == OrauldConst.ORA_TYPE_M101_TIMESTAMPTZ && _bytes[idx].length >= 13) {
+					if ((_bytes[idx][11] & (byte) 0x80) == 0) { // (+/-)hh:mm
+						int tz_hh_ = ((int) _bytes[idx][11]) - 20;
+						int tz_mm_ = ((int) _bytes[idx][12]) - 60;
+						if (tz_hh_ >= 0) {
+							sb.append('+');
+						}
+						sb.append(String.format("%02d:%02d", tz_hh_, tz_mm_));
+					} else {
+						int region_id_ = ((int) _bytes[idx][11] & 0x03);
+						region_id_ *= 64;
+						region_id_ += ((int) _bytes[idx][12] & 0xfc) / 4;
+						String region_nm_ = ZONEIDMAP.getRegion(region_id_);
+						sb.append(' ');
+						if (!PubMethod.IsBlank(region_nm_)) {
+							sb.append(region_nm_);
+						} else {
+							sb.append("?/?");
+						}
+					}
 				}
 			}
 			break;
