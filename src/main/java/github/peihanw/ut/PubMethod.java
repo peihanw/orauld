@@ -10,14 +10,15 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
-import java.sql.Timestamp;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
@@ -43,6 +44,7 @@ public class PubMethod {
 		Fmt19, // yyyy-MM-dd HH:mm:ss
 		Fmt18, // yyyyMMddHHmmss.SSS
 		Fmt17, // yyyyMMddHHmmssSSS
+		Fmt16, // yyMMddHHmmss.SSS
 		Fmt14, // yyyyMMddHHmmss
 		Fmt12, // yyMMddHHmmss
 		Fmt10, // yyyy-MM-dd
@@ -54,6 +56,7 @@ public class PubMethod {
 	public static final String _TMFMT19 = "yyyy-MM-dd HH:mm:ss";
 	public static final String _TMFMT18 = "yyyyMMddHHmmss.SSS";
 	public static final String _TMFMT17 = "yyyyMMddHHmmssSSS";
+	public static final String _TMFMT16 = "yyMMddHHmmss.SSS";
 	public static final String _TMFMT14 = "yyyyMMddHHmmss";
 	public static final String _TMFMT12 = "yyMMddHHmmss";
 	public static final String _DTFMT10 = "yyyy-MM-dd";
@@ -64,25 +67,27 @@ public class PubMethod {
 	public static final Pattern _ExpTMFMT19 = Pattern.compile("^[0-9]{4}[^0-9]([0-9]{2}[^0-9]){4}[0-9]{2}");
 	public static final Pattern _ExpTMFMT18 = Pattern.compile("^[0-9]{14}[^0-9][0-9]{3}");
 	public static final Pattern _ExpTMFMT17 = Pattern.compile("^[0-9]{17}");
+	public static final Pattern _ExpTMFMT16 = Pattern.compile("^[0-9]{12}[^0-9][0-9]{3}");
 	public static final Pattern _ExpTMFMT14 = Pattern.compile("^[0-9]{14}");
 	public static final Pattern _ExpTMFMT12 = Pattern.compile("^[0-9]{12}");
 	public static final Pattern _ExpTMFMT10 = Pattern.compile("^[0-9]{4}[^0-9][0-9]{2}[^0-9][0-9]{2}");
 	public static final Pattern _ExpTMFMT8 = Pattern.compile("^[0-9]{8}");
 	public static final Pattern _ExpTMFMT6 = Pattern.compile("^[0-9]{6}");
 
-	public static final SimpleDateFormat _TMDF23 = new SimpleDateFormat(_TMFMT23);
-	public static final SimpleDateFormat _TMDF19 = new SimpleDateFormat(_TMFMT19);
-	public static final SimpleDateFormat _TMDF18 = new SimpleDateFormat(_TMFMT18);
-	public static final SimpleDateFormat _TMDF17 = new SimpleDateFormat(_TMFMT17);
-	public static final SimpleDateFormat _TMDF14 = new SimpleDateFormat(_TMFMT14);
-	public static final SimpleDateFormat _TMDF12 = new SimpleDateFormat(_TMFMT12);
-	public static final SimpleDateFormat _DTDF10 = new SimpleDateFormat(_DTFMT10);
-	public static final SimpleDateFormat _DTDF8 = new SimpleDateFormat(_DTFMT8);
-	public static final SimpleDateFormat _DTDF6 = new SimpleDateFormat(_DTFMT6);
+	public static final DateTimeFormatter _TMDF23 = DateTimeFormatter.ofPattern(_TMFMT23);
+	public static final DateTimeFormatter _TMDF19 = DateTimeFormatter.ofPattern(_TMFMT19);
+	public static final DateTimeFormatter _TMDF18 = DateTimeFormatter.ofPattern(_TMFMT18);
+	public static final DateTimeFormatter _TMDF17 = DateTimeFormatter.ofPattern(_TMFMT17);
+	public static final DateTimeFormatter _TMDF16 = DateTimeFormatter.ofPattern(_TMFMT16);
+	public static final DateTimeFormatter _TMDF14 = DateTimeFormatter.ofPattern(_TMFMT14);
+	public static final DateTimeFormatter _TMDF12 = DateTimeFormatter.ofPattern(_TMFMT12);
+	public static final DateTimeFormatter _DTDF10 = DateTimeFormatter.ofPattern(_DTFMT10);
+	public static final DateTimeFormatter _DTDF8 = DateTimeFormatter.ofPattern(_DTFMT8);
+	public static final DateTimeFormatter _DTDF6 = DateTimeFormatter.ofPattern(_DTFMT6);
 
-	public static final TimeZone _LocTZ = TimeZone.getDefault();
+	public static final ZoneId _LocTZ = ZoneId.systemDefault();
 	public static final long _UNIX_EPOCH_MILLIS = 0;
-	public static final Date _UNIX_EPOCH_DATE = new Date(_UNIX_EPOCH_MILLIS);
+	public static final LocalDateTime _UNIX_EPOCH_DATE = LocalDateTime.ofEpochSecond(0, 0, ZoneOffset.UTC);
 
 	public static final Pattern _ExpIPv4 = Pattern
 			.compile("^(([0-1]?[0-9]{1,2}\\.)|(2[0-4][0-9]\\.)|(25[0-5]\\.)){3}" + "(([0-1]?[0-9]{1,2})|(2[0-4][0-9])|(25[0-5]))$");
@@ -146,133 +151,134 @@ public class PubMethod {
 	}
 
 	public static long Str2Long(String time_str, TimeStrFmt fmt) {
-		return Str2Time(time_str, fmt).getTime();
+		return Str2Time(time_str, fmt).atZone(_LocTZ).toInstant().toEpochMilli();
 	}
 
-	public static Timestamp Str2Timestamp(String time_str, TimeStrFmt fmt) {
-		return new Timestamp(Str2Time(time_str, fmt).getTime());
-	}
-
-	public static Date Str2Time(String time_str, TimeStrFmt fmt) {
-		Date rv_ = _UNIX_EPOCH_DATE;
-		SimpleDateFormat sdf_ = null;
+	public static LocalDateTime Str2Time(String time_str, TimeStrFmt fmt) {
+		LocalDateTime rv_ = _UNIX_EPOCH_DATE;
+		DateTimeFormatter dtf_ = null;
 		String time_str_ = time_str;
 		switch (fmt) {
 		case Fmt23:
-			sdf_ = _TMDF23;
+			dtf_ = _TMDF23;
 			if (time_str.length() > 23) {
 				time_str_ = time_str.substring(0, 23);
 			}
+			if (time_str_.length() > 10 && time_str_.charAt(10) != ' ') {
+				time_str_ = time_str_.substring(0, 9) + " " + time_str_.substring(11);
+			}
 			break;
 		case Fmt19:
+			dtf_ = _TMDF19;
 			if (time_str.length() > 19) {
 				time_str_ = time_str.substring(0, 19);
 			}
-			sdf_ = _TMDF19;
 			break;
 		case Fmt18:
-			sdf_ = _TMDF18;
+			dtf_ = _TMDF18;
 			if (time_str.length() > 18) {
 				time_str_ = time_str.substring(0, 18);
 			}
 			break;
 		case Fmt17:
-			sdf_ = _TMDF17;
+			dtf_ = _TMDF17;
 			if (time_str.length() > 17) {
 				time_str_ = time_str.substring(0, 17);
 			}
 			break;
+		case Fmt16:
+			dtf_ = _TMDF16;
+			if (time_str.length() > 16) {
+				time_str_ = time_str.substring(0, 16);
+			}
+			break;
 		case Fmt14:
-			sdf_ = _TMDF14;
+			dtf_ = _TMDF14;
 			if (time_str.length() > 14) {
 				time_str_ = time_str.substring(0, 14);
 			}
 			break;
 		case Fmt12:
-			sdf_ = _TMDF12;
+			dtf_ = _TMDF12;
 			if (time_str.length() > 12) {
 				time_str_ = time_str.substring(0, 12);
 			}
 			break;
 		case Fmt10:
-			sdf_ = _DTDF10;
+			dtf_ = _DTDF10;
 			if (time_str.length() > 10) {
 				time_str_ = time_str.substring(0, 10);
 			}
 			break;
 		case Fmt8:
-			sdf_ = _DTDF8;
+			dtf_ = _DTDF8;
 			if (time_str.length() > 8) {
 				time_str_ = time_str.substring(0, 8);
 			}
 			break;
 		case Fmt6:
-			sdf_ = _DTDF6;
+			dtf_ = _DTDF6;
 			if (time_str.length() > 6) {
 				time_str_ = time_str.substring(0, 6);
 			}
 			break;
 		default:
 			P(WRN, "ukn fmt [%s], regard as Fmt14", fmt);
-			sdf_ = _TMDF14;
+			dtf_ = _TMDF14;
 			if (time_str.length() > 14) {
 				time_str_ = time_str.substring(0, 14);
 			}
 			break;
 		}
 		try {
-			Date dt_ = ((SimpleDateFormat) sdf_.clone()).parse(time_str_);
+			LocalDateTime dt_ = LocalDateTime.parse(time_str_, dtf_);
 			rv_ = dt_;
-		} catch (ParseException e) {
+		} catch (DateTimeParseException e) {
 			P(ERO, e, "parse [%s,%s] exception, regard as _UNIX_EPOCH", time_str, fmt);
 		}
 		return rv_;
 	}
 
 	public static String Long2Str(long tm, TimeStrFmt fmt) {
-		return Time2Str(new Date(tm), fmt);
+		return Time2Str(LocalDateTime.ofInstant(Instant.ofEpochMilli(tm), _LocTZ), fmt);
 	}
 
-	public static String Timestamp2Str(Timestamp tm, TimeStrFmt fmt) {
-		return Time2Str(new Date(tm.getTime()), fmt);
-	}
-
-	public static String Time2Str(Date tm, TimeStrFmt fmt) {
-		SimpleDateFormat sdf_ = null;
+	public static String Time2Str(LocalDateTime tm, TimeStrFmt fmt) {
+		DateTimeFormatter dtf_ = null;
 		switch (fmt) {
 		case Fmt23:
-			sdf_ = _TMDF23;
+			dtf_ = _TMDF23;
 			break;
 		case Fmt19:
-			sdf_ = _TMDF19;
+			dtf_ = _TMDF19;
 			break;
 		case Fmt18:
-			sdf_ = _TMDF18;
+			dtf_ = _TMDF18;
 			break;
 		case Fmt17:
-			sdf_ = _TMDF17;
+			dtf_ = _TMDF17;
 			break;
 		case Fmt14:
-			sdf_ = _TMDF14;
+			dtf_ = _TMDF14;
 			break;
 		case Fmt12:
-			sdf_ = _TMDF12;
+			dtf_ = _TMDF12;
 			break;
 		case Fmt10:
-			sdf_ = _DTDF10;
+			dtf_ = _DTDF10;
 			break;
 		case Fmt8:
-			sdf_ = _DTDF8;
+			dtf_ = _DTDF8;
 			break;
 		case Fmt6:
-			sdf_ = _DTDF6;
+			dtf_ = _DTDF6;
 			break;
 		default:
 			P(WRN, "ukn fmt [%s], regard as Fmt14", fmt);
-			sdf_ = _TMDF14;
+			dtf_ = _TMDF14;
 			break;
 		}
-		return ((SimpleDateFormat) sdf_.clone()).format(tm);
+		return dtf_.format(tm);
 	}
 
 	public static String RandomStr(int str_len) {
