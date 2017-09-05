@@ -115,7 +115,7 @@ public class OrauldCmdline {
 		}
 
 		if (PubMethod.IsEmpty(_querySql) || (PubMethod.IsEmpty(_bcpFnm) && PubMethod.IsEmpty(_ctlFnm))) {
-			_usage(1);
+			_usage(OrauldConst.EXIT_CODE_1_USAGE_ERR);
 		}
 
 		if (PubMethod.IsEmpty(_charset)) {
@@ -127,17 +127,17 @@ public class OrauldCmdline {
 			Console console_ = System.console();
 			if (console_ == null) {
 				P(ERO, "can not get console object for read password");
-				_usage(1);
+				_usage(OrauldConst.EXIT_CODE_1_USAGE_ERR);
 			} else {
 				_loginRec._password = new String(console_.readPassword("Please input password "));
 			}
 		}
 
 		if (!_readLoginCfg()) {
-			_usage(1);
+			_usage(OrauldConst.EXIT_CODE_1_USAGE_ERR);
 		}
 		if (!_parseLoginStr()) {
-			_usage(1);
+			_usage(OrauldConst.EXIT_CODE_1_USAGE_ERR);
 		}
 
 		Stdout._DftLevel = _verbosity;
@@ -294,7 +294,7 @@ public class OrauldCmdline {
 		sb_.append(newline_);
 		System.out.print(sb_.substring(0));
 
-		if (jvm_exit_code >= 0) {
+		if (jvm_exit_code != OrauldConst.EXIT_CODE_0_SUCCESS) {
 			System.exit(jvm_exit_code);
 		}
 	}

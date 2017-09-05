@@ -37,13 +37,13 @@ public class OrauldMgr {
 		try {
 			if (!_initConn()) {
 				P(WRN, "call _initConn() error");
-				return 1;
+				return OrauldConst.EXIT_CODE_2_LOGIN_FAILED;
 			} else {
 				connect_ok_ = true;
 			}
 		} catch (Throwable e) { // for 'java.lang.NoClassDefFoundError'
 			P(WRN, e, "call _initConn error");
-			return 1;
+			return OrauldConst.EXIT_CODE_2_LOGIN_FAILED;
 		} finally {
 			if (!connect_ok_) {
 				_emitEOFwithoutThrow();
@@ -55,10 +55,10 @@ public class OrauldMgr {
 		} catch (Exception e) {
 			P(WRN, e, "call _exec() exception");
 			_emitEOFwithoutThrow();
-			return 1;
+			return OrauldConst.EXIT_CODE_4_EXCEPTION;
 		}
 
-		return 0;
+		return OrauldConst.EXIT_CODE_0_SUCCESS;
 	}
 
 	public void closeResource() {

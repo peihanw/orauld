@@ -1,7 +1,12 @@
 package github.peihanw.orauld;
 
 public class OrauldConst {
-	// supported data types
+	public static final int EXIT_CODE_0_SUCCESS = 0;
+	public static final int EXIT_CODE_1_USAGE_ERR = 1;
+	public static final int EXIT_CODE_2_LOGIN_FAILED = 2;
+	public static final int EXIT_CODE_3_IMBALANCE = 3;
+	public static final int EXIT_CODE_4_EXCEPTION = 4;
+
 	public static final int ORA_TYPE_M8_ROWID = -8;
 	public static final int ORA_TYPE_M101_TIMESTAMPTZ = -101;
 	public static final int ORA_TYPE_M102_TIMESTAMPTZL = -102;

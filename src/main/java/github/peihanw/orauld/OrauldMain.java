@@ -22,7 +22,7 @@ public class OrauldMain {
 			_main(args);
 		} catch (Exception e) {
 			P(ERO, e, "encounter exception");
-			System.exit(3);
+			System.exit(OrauldConst.EXIT_CODE_4_EXCEPTION);
 		}
 	}
 
@@ -70,8 +70,8 @@ public class OrauldMain {
 			P(INF, "balance ok, fetched eq dumped, %d %d", mgr_._sqlCnt, _DmpRunnable._dmpCnt);
 		} else {
 			P(ERO, "balance FAILED, fetched ne dumped, %d %d", mgr_._sqlCnt, _DmpRunnable._dmpCnt);
-			if (rc_ == 0) {
-				rc_ = 2;
+			if (rc_ == OrauldConst.EXIT_CODE_0_SUCCESS) {
+				rc_ = OrauldConst.EXIT_CODE_3_IMBALANCE;
 			}
 		}
 
