@@ -106,45 +106,8 @@ public class OrauldTuple {
 		case OrauldConst.ORA_TYPE_91_DATE:
 		case OrauldConst.ORA_TYPE_93_TIMESTAMP:
 		case OrauldConst.ORA_TYPE_M101_TIMESTAMPTZ:
-		case OrauldConst.ORA_TYPE_M102_TIMESTAMPTZL: // TODO: refactory and adjust to local zone
-			if (_bytes[idx] != null) {
-				int cc_ = ((int) _bytes[idx][0] & 0xff) - 100;
-				int yy_ = ((int) _bytes[idx][1] & 0xff) - 100;
-				int mm_ = (int) _bytes[idx][2];
-				int dd_ = (int) _bytes[idx][3];
-				int hh_ = ((int) _bytes[idx][4]) - 1;
-				int mi_ = ((int) _bytes[idx][5]) - 1;
-				int ss_ = ((int) _bytes[idx][6]) - 1;
-				sb.append(String.format("%02d%02d-%02d-%02d %02d:%02d:%02d", cc_, yy_, mm_, dd_, hh_, mi_, ss_));
-				int nano_ = 0;
-				if (_bytes[idx].length >= 11) {
-					nano_ = ByteBuffer.wrap(_bytes[idx], 7, 4).getInt();
-				}
-				if (column_type_ != OrauldConst.ORA_TYPE_91_DATE) {
-					sb.append(String.format(".%03d", nano_ / 1000000));
-				}
-				if (column_type_ == OrauldConst.ORA_TYPE_M101_TIMESTAMPTZ && _bytes[idx].length >= 13) {
-					if ((_bytes[idx][11] & (byte) 0x80) == 0) { // (+/-)hh:mm
-						int tz_hh_ = ((int) _bytes[idx][11]) - 20;
-						int tz_mm_ = ((int) _bytes[idx][12]) - 60;
-						if (tz_hh_ >= 0) {
-							sb.append('+');
-						}
-						sb.append(String.format("%02d:%02d", tz_hh_, tz_mm_));
-					} else {
-						int region_id_ = ((int) _bytes[idx][11] & 0x03);
-						region_id_ *= 64;
-						region_id_ += ((int) _bytes[idx][12] & 0xfc) / 4;
-						String region_nm_ = ZONEIDMAP.getRegion(region_id_);
-						sb.append(' ');
-						if (!PubMethod.IsBlank(region_nm_)) {
-							sb.append(region_nm_);
-						} else {
-							sb.append("?/?");
-						}
-					}
-				}
-			}
+		case OrauldConst.ORA_TYPE_M102_TIMESTAMPTZL:
+			_cvtTimeCell(sb, column_type_, _bytes[idx]);
 			break;
 		case OrauldConst.ORA_TYPE_2005_CLOB: // cast oracle.sql.CLOB to java.sql.Clob
 			if (_cells[idx] != null) {
@@ -160,6 +123,48 @@ public class OrauldTuple {
 				sb.append(obj_.toString());
 			}
 			break;
+		}
+	}
+
+	private void _cvtTimeCell(StringBuilder sb, int column_type, byte[] guts) {
+		if (guts == null)
+			return;
+		// TODO: adjust to local zone for OrauldConst.ORA_TYPE_M102_TIMESTAMPTZL:
+		int cc_ = ((int) guts[0] & 0xff) - 100;
+		int yy_ = ((int) guts[1] & 0xff) - 100;
+		int mm_ = (int) guts[2];
+		int dd_ = (int) guts[3];
+		int hh_ = ((int) guts[4]) - 1;
+		int mi_ = ((int) guts[5]) - 1;
+		int ss_ = ((int) guts[6]) - 1;
+		sb.append(String.format("%02d%02d-%02d-%02d %02d:%02d:%02d", cc_, yy_, mm_, dd_, hh_, mi_, ss_));
+		int nano_ = 0;
+		if (guts.length >= 11) {
+			nano_ = ByteBuffer.wrap(guts, 7, 4).getInt();
+		}
+		if (column_type != OrauldConst.ORA_TYPE_91_DATE) {
+			sb.append(String.format(".%03d", nano_ / 1000000));
+		}
+		if (column_type == OrauldConst.ORA_TYPE_M101_TIMESTAMPTZ && guts.length >= 13) {
+			if ((guts[11] & (byte) 0x80) == 0) { // (+/-)hh:mm
+				int tz_hh_ = ((int) guts[11]) - 20;
+				int tz_mm_ = ((int) guts[12]) - 60;
+				if (tz_hh_ >= 0) {
+					sb.append('+');
+				}
+				sb.append(String.format("%02d:%02d", tz_hh_, tz_mm_));
+			} else {
+				int region_id_ = ((int) guts[11] & 0x03);
+				region_id_ *= 64;
+				region_id_ += ((int) guts[12] & 0xfc) / 4;
+				String region_nm_ = ZONEIDMAP.getRegion(region_id_);
+				sb.append(' ');
+				if (!PubMethod.IsBlank(region_nm_)) {
+					sb.append(region_nm_);
+				} else {
+					sb.append("?/?");
+				}
+			}
 		}
 	}
 }
