@@ -181,7 +181,7 @@ public class OrauldTuple {
 				if (!PubMethod.IsBlank(region_nm_)) {
 					sb.append(region_nm_);
 				} else {
-					sb.append("?/?");
+					sb.append(String.format("0x%02x%02x/%d", guts[11], guts[12], region_id_));
 				}
 			}
 		}
