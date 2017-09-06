@@ -24,6 +24,8 @@ $ git checkout v-0.2
 $ gradle build
 ```
 
+Or just download the latest fat-jar binary directly from the release page.
+
 #### Usage syntax
 
 ```
@@ -88,9 +90,10 @@ $ java -jar orauld.jar \
 - Please download ojdbc14.jar yourself.
 - Oracle jdbc drivers 'ojdbc6.jar & orai18n.jar' are not recommended. Test results show that 'ojdbc6.jar' may cause performance dropping down about 30-50%.
 - Test environment is Oracle 11g (11.2.0.4.0).
+- Internal performance test result: A table with 30 fields (just NUMBER & VARCHAR2), 87042318 records, consumed 1067 seconds, CSV file size 19017078706 bytes. That is about 81576 records/seconds & 16.997MB/seconds. And there is no significant performance difference with 2 or 4 worker threads.
 
 #### TODO
 
 - Replace JDK LinkedBlockingQueue with com.conversantmedia:disruptor to impove performance. (implemented in branch v-0.2)
-- Support DATE/TIMESTAMP WITH TIMEZONE. (canceled: no documents for internal timezone codes, please use to_char())
+- Support DATE/TIMESTAMP WITH TIMEZONE. (please wait for control file generation with TIMESTAMP-TZ/TZL fields)
 
