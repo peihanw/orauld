@@ -3,6 +3,9 @@ package github.peihanw.orauld;
 import java.nio.ByteBuffer;
 import java.sql.Clob;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import github.peihanw.ut.PubMethod;
 import oracle.sql.NUMBER;
@@ -127,9 +130,10 @@ public class OrauldTuple {
 	}
 
 	private void _cvtTimeCell(StringBuilder sb, int column_type, byte[] guts) {
-		if (guts == null)
+		if (guts == null || guts.length < 7) {
 			return;
-		// TODO: adjust to local zone for OrauldConst.ORA_TYPE_M102_TIMESTAMPTZL:
+		}
+
 		int cc_ = ((int) guts[0] & 0xff) - 100;
 		int yy_ = ((int) guts[1] & 0xff) - 100;
 		int mm_ = (int) guts[2];
@@ -137,14 +141,29 @@ public class OrauldTuple {
 		int hh_ = ((int) guts[4]) - 1;
 		int mi_ = ((int) guts[5]) - 1;
 		int ss_ = ((int) guts[6]) - 1;
-		sb.append(String.format("%02d%02d-%02d-%02d %02d:%02d:%02d", cc_, yy_, mm_, dd_, hh_, mi_, ss_));
+
 		int nano_ = 0;
 		if (guts.length >= 11) {
 			nano_ = ByteBuffer.wrap(guts, 7, 4).getInt();
 		}
-		if (column_type != OrauldConst.ORA_TYPE_91_DATE) {
-			sb.append(String.format(".%03d", nano_ / 1000000));
+
+		String tm_str_;
+		if (column_type == OrauldConst.ORA_TYPE_91_DATE) {
+			tm_str_ = String.format("%02d%02d-%02d-%02d %02d:%02d:%02d", cc_, yy_, mm_, dd_, hh_, mi_, ss_);
+		} else {
+			tm_str_ = String.format("%02d%02d-%02d-%02d %02d:%02d:%02d.%03d", cc_, yy_, mm_, dd_, hh_, mi_, ss_, nano_ / 1000000);
 		}
+
+		if (column_type == OrauldConst.ORA_TYPE_M102_TIMESTAMPTZL) {
+			// assume DBTIMEZONE is UTC and SESSIONTIMEZONE is ZoneId.sysDefault()
+			long utc_millis_ = PubMethod.Str2Time(tm_str_, PubMethod.TimeStrFmt.Fmt23).atZone(ZoneOffset.UTC).toInstant()
+					.toEpochMilli();
+			sb.append(PubMethod.Time2Str(LocalDateTime.ofInstant(Instant.ofEpochMilli(utc_millis_), PubMethod._LocTZ),
+					PubMethod.TimeStrFmt.Fmt23));
+		} else {
+			sb.append(tm_str_);
+		}
+
 		if (column_type == OrauldConst.ORA_TYPE_M101_TIMESTAMPTZ && guts.length >= 13) {
 			if ((guts[11] & (byte) 0x80) == 0) { // (+/-)hh:mm
 				int tz_hh_ = ((int) guts[11]) - 20;
