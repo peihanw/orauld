@@ -5,6 +5,7 @@ import java.sql.Clob;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 
 import github.peihanw.ut.PubMethod;
@@ -154,35 +155,63 @@ public class OrauldTuple {
 			tm_str_ = String.format("%02d%02d-%02d-%02d %02d:%02d:%02d.%03d", cc_, yy_, mm_, dd_, hh_, mi_, ss_, nano_ / 1000000);
 		}
 
-		if (column_type == OrauldConst.ORA_TYPE_M102_TIMESTAMPTZL) {
+		switch (column_type) {
+		case OrauldConst.ORA_TYPE_M102_TIMESTAMPTZL:
 			// assume DBTIMEZONE is UTC and SESSIONTIMEZONE is ZoneId.sysDefault()
 			long utc_millis_ = PubMethod.Str2Time(tm_str_, PubMethod.TimeStrFmt.Fmt23).atZone(ZoneOffset.UTC).toInstant()
 					.toEpochMilli();
 			sb.append(PubMethod.Time2Str(LocalDateTime.ofInstant(Instant.ofEpochMilli(utc_millis_), PubMethod._LocTZ),
 					PubMethod.TimeStrFmt.Fmt23));
-		} else {
+			return;
+		case OrauldConst.ORA_TYPE_M101_TIMESTAMPTZ:
+			if (guts.length < 13) { // may happen
+				sb.append(tm_str_);
+				return;
+			}
+			break;
+		default: // ORA_TYPE_91_DATE or ORA_TYPE_93_TIMESTAMP
 			sb.append(tm_str_);
+			return;
 		}
 
-		if (column_type == OrauldConst.ORA_TYPE_M101_TIMESTAMPTZ && guts.length >= 13) {
-			if ((guts[11] & (byte) 0x80) == 0) { // (+/-)hh:mm
-				int tz_hh_ = ((int) guts[11]) - 20;
-				int tz_mm_ = ((int) guts[12]) - 60;
-				if (tz_hh_ >= 0) {
-					sb.append('+');
-				}
-				sb.append(String.format("%02d:%02d", tz_hh_, tz_mm_));
+		// ORA_TYPE_M101_TIMESTAMPTZ & guts.length >= 13
+		long utc_millis_ = PubMethod.Str2Time(tm_str_, PubMethod.TimeStrFmt.Fmt23).atZone(ZoneOffset.UTC).toInstant()
+				.toEpochMilli();
+		if ((guts[11] & (byte) 0x80) == 0) { // (+/-)hh:mm
+			int tz_hh_ = ((int) guts[11]) - 20;
+			int tz_mm_ = ((int) guts[12]) - 60;
+			long delta_millis_ = tz_hh_ * 3600000L + tz_mm_ * 60000L;
+			sb.append(
+					PubMethod.Time2Str(LocalDateTime.ofInstant(Instant.ofEpochMilli(utc_millis_ + delta_millis_), ZoneId.of("UTC")),
+							PubMethod.TimeStrFmt.Fmt23));
+			sb.append(' ');
+			if (tz_hh_ >= 0) {
+				sb.append('+');
+			}
+			sb.append(String.format("%02d:%02d", tz_hh_, tz_mm_));
+		} else {
+			int region_id_ = ((int) guts[11] & 0x03);
+			region_id_ *= 64;
+			region_id_ += ((int) guts[12] & 0xfc) / 4;
+			String region_nm_ = ZONEIDMAP.getRegion(region_id_);
+			ZoneId zone_id_ = null;
+			if (PubMethod.IsBlank(region_nm_)) {
+				region_nm_ = String.format("0x%02x%02x/%d", guts[11], guts[12], region_id_);
 			} else {
-				int region_id_ = ((int) guts[11] & 0x03);
-				region_id_ *= 64;
-				region_id_ += ((int) guts[12] & 0xfc) / 4;
-				String region_nm_ = ZONEIDMAP.getRegion(region_id_);
+				zone_id_ = ZoneId.of(region_nm_);
+			}
+			if (zone_id_ == null) {
+				sb.append(tm_str_);
 				sb.append(' ');
-				if (!PubMethod.IsBlank(region_nm_)) {
-					sb.append(region_nm_);
-				} else {
-					sb.append(String.format("0x%02x%02x/%d", guts[11], guts[12], region_id_));
-				}
+				sb.append(region_nm_);
+			} else {
+				ZoneOffset zone_offset_ = zone_id_.getRules().getOffset(Instant.ofEpochMilli(utc_millis_));
+				long delta_millis_ = zone_offset_.getTotalSeconds() * 1000L;
+				sb.append(PubMethod.Time2Str(
+						LocalDateTime.ofInstant(Instant.ofEpochMilli(utc_millis_ + delta_millis_), ZoneId.of("UTC")),
+						PubMethod.TimeStrFmt.Fmt23));
+				sb.append(' ');
+				sb.append(region_nm_);
 			}
 		}
 	}

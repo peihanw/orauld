@@ -169,12 +169,16 @@ public class OrauldMgr {
 		pw_.printf("TRAILING NULLCOLS%n(%n");
 		for (int i = 1; i <= column_cnt_; i++) {
 			pw_.printf(" %s", _meta.getColumnName(i));
-			if (_columnTypes[i] == 91) {
+			if (_columnTypes[i] == OrauldConst.ORA_TYPE_91_DATE) {
 				pw_.printf(" DATE 'YYYY-MM-DD HH24:MI:SS'");
-			} else if (_columnTypes[i] == 93) {
+			} else if (_columnTypes[i] == OrauldConst.ORA_TYPE_93_TIMESTAMP) {
 				pw_.printf(" TIMESTAMP 'YYYY-MM-DD HH24:MI:SS.FF3'");
-			} else if (_columnTypes[i] == 12 && _meta.getPrecision(i) > 255) {
+			} else if (_columnTypes[i] == OrauldConst.ORA_TYPE_12_VARCHAR && _meta.getPrecision(i) > 255) {
 				pw_.printf(" CHAR(%d)", _meta.getPrecision(i));
+			} else if (_columnTypes[i] == OrauldConst.ORA_TYPE_M102_TIMESTAMPTZL) {
+				pw_.printf(" TIMESTAMP WITH LOCAL TIME ZONE 'YYYY-MM-DD HH24:MI:SS.FF3'");
+			} else if (_columnTypes[i] == OrauldConst.ORA_TYPE_M101_TIMESTAMPTZ) {
+				pw_.printf(" TIMESTAMP WITH TIME ZONE 'YYYY-MM-DD HH24:MI:SS.FF3 TZR'");
 			}
 			if (i < column_cnt_) {
 				pw_.printf(",%n");
