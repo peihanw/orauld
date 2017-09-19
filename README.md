@@ -94,6 +94,6 @@ $ java -jar orauld.jar \
 
 #### TODO
 
-- Replace JDK LinkedBlockingQueue with com.conversantmedia:disruptor to impove performance. (implemented in branch v-0.2)
-- Support DATE/TIMESTAMP WITH TIMEZONE. (please wait for control file generation with TIMESTAMP-TZ/TZL fields)
+- Replace JDK LinkedBlockingQueue with com.conversantmedia:disruptor to impove performance. (implemented since v-0.2.0)
+- Support DATE/TIMESTAMP WITH TIMEZONE. (implemented since v-0.2.2)
 
