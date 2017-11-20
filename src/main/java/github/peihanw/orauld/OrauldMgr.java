@@ -12,6 +12,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static github.peihanw.ut.Stdout.*;
+
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -150,7 +152,9 @@ public class OrauldMgr {
 			return;
 		}
 		int column_cnt_ = _meta.getColumnCount();
-		String table_name_ = _cmdline._ctlFnm.replaceAll("\\.[0-9A-Za-z]+$", "");
+		String table_raw_ = _cmdline._ctlFnm.replaceAll("\\.[0-9A-Za-z]+$", "");
+		File table_path_ = new File(table_raw_);
+		String table_name_ = table_path_.getName();
 		FileOutputStream fos_ = new FileOutputStream(_cmdline._ctlFnm);
 		OutputStreamWriter osw_ = new OutputStreamWriter(fos_, _cmdline._charset);
 		PrintWriter pw_ = new PrintWriter(osw_);
