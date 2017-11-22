@@ -193,7 +193,7 @@ public class OrauldMgr {
 		pw_.printf(")%n");
 		pw_.printf("-- $ORACLE_HOME/bin/sqlldr userid=\"user/password@oraclesid\"\\%n");
 		pw_.printf("--  silent=header,feedback\\%n");
-		pw_.printf("--  control=%s\\%n", _cmdline._ctlFnm);
+		pw_.printf("--  control=%s\\%n", new File(_cmdline._ctlFnm).getName());
 		pw_.printf("--  data=%s.bcp\\%n", table_name_);
 		pw_.printf("--  bad=%s.bad\\%n", table_name_);
 		pw_.printf("--  log=%s.log\\%n", table_name_);
