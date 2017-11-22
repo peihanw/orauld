@@ -1,5 +1,7 @@
 package github.peihanw.orauld;
 
+import java.util.regex.Pattern;
+
 public class OrauldConst {
 	public static final int EXIT_CODE_0_SUCCESS = 0;
 	public static final int EXIT_CODE_1_USAGE_ERR = 1;
@@ -17,4 +19,7 @@ public class OrauldConst {
 	public static final int ORA_TYPE_93_TIMESTAMP = 93;
 	public static final int ORA_TYPE_2004_BLOB = 2004;
 	public static final int ORA_TYPE_2005_CLOB = 2005;
+
+	public static final String REGEXP_FNM_SFX = "\\.[0-9A-Za-z]+$";
+	public static final Pattern PATTERN_FNM_SFX = Pattern.compile(REGEXP_FNM_SFX);
 }

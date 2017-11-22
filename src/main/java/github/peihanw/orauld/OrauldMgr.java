@@ -152,7 +152,7 @@ public class OrauldMgr {
 			return;
 		}
 		int column_cnt_ = _meta.getColumnCount();
-		String table_raw_ = _cmdline._ctlFnm.replaceAll("\\.[0-9A-Za-z]+$", "");
+		String table_raw_ = _cmdline._ctlFnm.replaceAll(OrauldConst.REGEXP_FNM_SFX, "");
 		File table_path_ = new File(table_raw_);
 		String table_name_ = table_path_.getName();
 		FileOutputStream fos_ = new FileOutputStream(_cmdline._ctlFnm);

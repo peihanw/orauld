@@ -10,7 +10,6 @@ import java.util.concurrent.TimeoutException;
 import github.peihanw.ut.PubMethod;
 import static github.peihanw.ut.Stdout.*;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class OrauldDmpRunnable implements Runnable {
 
@@ -23,7 +22,6 @@ public class OrauldDmpRunnable implements Runnable {
 	private boolean _terminateFlag = false;
 	private OrauldCmdline _cmdline;
 	private String _eor;
-	private static Pattern _FnmSfx = Pattern.compile("\\.[0-9A-Za-z]+$");
 
 	public OrauldDmpRunnable(BlockingQueue<OrauldTuple>[] up_queues, BlockingQueue<OrauldTuple>[] dn_queues) {
 		_dnQueues = dn_queues;
@@ -133,7 +131,7 @@ public class OrauldDmpRunnable implements Runnable {
 		if (_cmdline._splitLines > 0) {
 			String sfx_ = "";
 			String pfx_ = bcp_fnm_;
-			Matcher m = _FnmSfx.matcher(bcp_fnm_);
+			Matcher m = OrauldConst.PATTERN_FNM_SFX.matcher(bcp_fnm_);
 			if (m.find()) {
 				sfx_ = m.group();
 				pfx_ = m.replaceAll("");
