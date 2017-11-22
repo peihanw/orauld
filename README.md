@@ -44,7 +44,7 @@ eg   : -F $HOME/etc/mytest_db_login.cfg -q "select * from table_name" -o uld.bcp
      : -D : default record delimiter is %n, should be used for dealing with embeded CR/LF
      : -c : default using JVM default encoding, support GB18030/UTF-8 etc.
      : -w : default 2, worker thread number, should between 1 and 4
-     : -s : default 0 (no split), open a new bcp file every split_lines, bcp files will be sequential numbered with '_%09d'
+     : -s : default 0 (no split), open a new bcp file every split_lines, bcp files will be sequential numbered with '_%05d'
      : -v : default 3, 0:ERO, 1:WRN, 2:INF, 3:DBG, 4:TRC
      : -h : default no header line
      : -t : default no trim for CHAR type

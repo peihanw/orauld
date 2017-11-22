@@ -278,7 +278,7 @@ public class OrauldCmdline {
 		sb_.append("     : -w : default 2, worker thread number, should between 1 and 4");
 		sb_.append(newline_);
 		sb_.append(
-				"     : -s : default 0 (no split), open a new bcp file every split_lines, bcp files will be sequential numbered with '_%09d'");
+				"     : -s : default 0 (no split), open a new bcp file every split_lines, bcp files will be sequential numbered with '_%05d'");
 		sb_.append(newline_);
 		sb_.append("     : -v : default 3, 0:ERO, 1:WRN, 2:INF, 3:DBG, 4:TRC");
 		sb_.append(newline_);

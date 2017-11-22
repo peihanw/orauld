@@ -136,7 +136,7 @@ public class OrauldDmpRunnable implements Runnable {
 				sfx_ = m.group();
 				pfx_ = m.replaceAll("");
 			}
-			String seq_ = String.format("_%09d", ++_splitSeq);
+			String seq_ = String.format("_%05d", ++_splitSeq);
 			bcp_fnm_ = pfx_ + seq_ + sfx_;
 		}
 		FileOutputStream fos_ = new FileOutputStream(bcp_fnm_);
